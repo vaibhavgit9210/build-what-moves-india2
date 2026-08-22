@@ -13,15 +13,25 @@ React+TS+Vite app, so `gh-pages` holds the **built dist**, not the source.
 (`/usr/local/share/gitleaks/bin/git` shadows real git; `--no-verify` is
 intercepted and still scans) blocks the minified bundle because it contains the
 intentional demo credential and a false-positive in the transformers.js chunk.
-Instead, `.github/workflows/deploy.yml` builds on CI and force-pushes
-`gh-pages` on every push to `main`. So a deploy = `git push origin main`, wait
-~1 min, done. Source lines with the demo password carry `gitleaks:allow`
-annotations, which is why `main` commits pass the scan.
+Instead, `.github/workflows/deploy.yml` builds on CI and deploys on every push
+to `main`. So a deploy = `git push origin main`, wait ~1.5 min, done. Source
+lines with the demo password carry `gitleaks:allow` annotations, which is why
+`main` commits pass the scan.
 
-Pages gotcha (Aug 2026): a gh-pages branch created by the Actions bot does NOT
-auto-enable Pages, and when auto-enable did fire (after a placeholder push with
-user SSH creds) GitHub picked `main` as the source. The user set
-Settings → Pages → branch `gh-pages` `/(root)` manually in Brave.
+How the deploy actually lands (learned the hard way, Aug 2026): the repo's
+Pages config is stuck at `build_type: legacy, source: main` and CANNOT be
+changed from CI (`PUT /pages` with `GITHUB_TOKEN` returns 403 "Resource not
+accessible by integration"; `actions/configure-pages` only creates sites, it
+never converts an existing legacy one). Serving `main` means serving the raw
+Vite source `index.html`, which is a blank white page. The workflow therefore
+deploys through the **Pages deployments API** (`actions/upload-pages-artifact`
++ `actions/deploy-pages`), which serves the built dist regardless of the
+branch setting. It also still force-pushes `gh-pages` (kept as an inspectable
+copy of the build). Consequence of the leftover legacy config: every push to
+`main` first triggers a legacy build FROM main (site goes blank for ~1 min)
+until the Actions deployment lands last and wins. If the user ever flips
+Settings → Pages → Source to "GitHub Actions" in Brave, the blank window
+disappears; do not ask them to pick a branch there again.
 
 ## Shape
 
