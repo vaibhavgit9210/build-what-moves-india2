@@ -42,6 +42,25 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+      # Every push to main also fires a legacy Pages build of raw main, and
+      # whichever deployment lands last wins. Wait it out so ours lands last.
+      - name: Wait for the legacy Pages build to settle
+        run: |
+          for i in $(seq 1 60); do
+            status=$(curl -s \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages/builds/latest" \
+              | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('status'), d.get('commit'))")
+            echo "latest legacy build: ${status}"
+            case "$status" in
+              built\ ${GITHUB_SHA}|errored\ ${GITHUB_SHA}) exit 0;;
+            esac
+            sleep 5
+          done
+          echo "legacy build still pending after 5 min; deploying anyway"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Deploy to Pages via Actions API
         id: deployment
         uses: actions/deploy-pages@v4
