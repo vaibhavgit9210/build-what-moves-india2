@@ -37,6 +37,33 @@ function incidentFieldById(category: CategoryId | undefined): Map<string, Incide
   return map;
 }
 
+/**
+ * Human-readable value for a detail row: dates/datetimes in the UI language,
+ * numbers with Indian digit grouping. Falls back to the stored string.
+ */
+function formatFieldValue(field: IncidentField | undefined, value: string, lang: string): string {
+  const locale = lang === 'hi' ? 'hi-IN' : 'en-IN';
+  if (field?.type === 'date' || field?.type === 'datetime-local') {
+    const d = new Date(value);
+    if (!Number.isNaN(d.getTime())) {
+      return field.type === 'date'
+        ? d.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
+        : d.toLocaleString(locale, {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+          });
+    }
+  }
+  if (field?.type === 'number') {
+    const n = Number(value);
+    if (Number.isFinite(n)) return n.toLocaleString(locale);
+  }
+  return value;
+}
+
 function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex flex-col sm:flex-row sm:gap-4 py-2 border-b border-border last:border-b-0">
@@ -183,7 +210,7 @@ export default function ReportReview() {
               <Row
                 key={fieldId}
                 label={field ? t(field.labelKey) : humanize(fieldId)}
-                value={option ? t(option.labelKey) : value}
+                value={option ? t(option.labelKey) : formatFieldValue(field, value, lang)}
               />
             );
           })}
