@@ -1,0 +1,146 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — GOV.UK-inspired restraint, Indian public-service palette.
+ * Everything references CSS custom properties so the high-contrast mode can
+ * swap values under html[data-contrast="high"] without touching components.
+ */
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans",
+    "Noto Sans Devanagari", "Helvetica Neue", Arial, sans-serif;
+
+  --color-ink: var(--tok-ink);
+  --color-page: var(--tok-page);
+  --color-surface: var(--tok-surface);
+  --color-border: var(--tok-border);
+  --color-muted: var(--tok-muted);
+  --color-link: var(--tok-link);
+  --color-linkvisited: var(--tok-linkvisited);
+  --color-brand: var(--tok-brand);
+  --color-brandtext: var(--tok-brandtext);
+  --color-action: var(--tok-action);
+  --color-actionhover: var(--tok-actionhover);
+  --color-actiontext: var(--tok-actiontext);
+  --color-focus: var(--tok-focus);
+  --color-focustext: var(--tok-focustext);
+  --color-error: var(--tok-error);
+  --color-errorbg: var(--tok-errorbg);
+  --color-success: var(--tok-success);
+  --color-successbg: var(--tok-successbg);
+  --color-warn: var(--tok-warn);
+  --color-warnbg: var(--tok-warnbg);
+  --color-info: var(--tok-info);
+  --color-infobg: var(--tok-infobg);
+  --color-saffron: var(--tok-saffron);
+}
+
+:root {
+  --tok-ink: #0b0c0c;
+  --tok-page: #ffffff;
+  --tok-surface: #f3f4f6;
+  --tok-border: #b5bcc4;
+  --tok-muted: #4b5563;
+  --tok-link: #1d4ed8;
+  --tok-linkvisited: #5b21b6;
+  --tok-brand: #12263f;
+  --tok-brandtext: #ffffff;
+  --tok-action: #046a38;
+  --tok-actionhover: #024e29;
+  --tok-actiontext: #ffffff;
+  --tok-focus: #ffdd00;
+  --tok-focustext: #0b0c0c;
+  --tok-error: #b3261e;
+  --tok-errorbg: #fdf1f0;
+  --tok-success: #046a38;
+  --tok-successbg: #eefaf2;
+  --tok-warn: #8a5a00;
+  --tok-warnbg: #fdf6e3;
+  --tok-info: #1d4ed8;
+  --tok-infobg: #eef4fd;
+  --tok-saffron: #c2540a;
+}
+
+/* High-contrast mode: pure black/white, underlined links, black actions. */
+html[data-contrast="high"] {
+  --tok-ink: #000000;
+  --tok-page: #ffffff;
+  --tok-surface: #ffffff;
+  --tok-border: #000000;
+  --tok-muted: #000000;
+  --tok-link: #0000ee;
+  --tok-linkvisited: #551a8b;
+  --tok-brand: #000000;
+  --tok-brandtext: #ffffff;
+  --tok-action: #000000;
+  --tok-actionhover: #000000;
+  --tok-actiontext: #ffffff;
+  --tok-error: #a80000;
+  --tok-errorbg: #ffffff;
+  --tok-success: #005500;
+  --tok-successbg: #ffffff;
+  --tok-warn: #5c3c00;
+  --tok-warnbg: #ffffff;
+  --tok-info: #0000ee;
+  --tok-infobg: #ffffff;
+  --tok-saffron: #7a3500;
+}
+html[data-contrast="high"] a { text-decoration: underline; }
+html[data-contrast="high"] .hc-border { border-width: 2px; }
+
+/* Text size control (Accessibility panel). Root font-size scales rem units. */
+html[data-textsize="small"] { font-size: 93.75%; }
+html[data-textsize="large"] { font-size: 118.75%; }
+
+/* Reduced motion: both the explicit setting and the OS preference. */
+html[data-motion="reduced"] *,
+html[data-motion="reduced"] *::before,
+html[data-motion="reduced"] *::after {
+  animation-duration: 0.001s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001s !important;
+  scroll-behavior: auto !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001s !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html { background: var(--tok-page); }
+body {
+  font-family: var(--font-sans);
+  color: var(--tok-ink);
+  background: var(--tok-page);
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: break-word;
+}
+
+/* Strong, unmistakable focus indicator (GOV.UK-style yellow). */
+:focus-visible {
+  outline: 3px solid var(--tok-focus);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 1px var(--tok-focustext);
+  border-radius: 2px;
+}
+/* In @layer base so Tailwind utilities (e.g. ButtonLink's text color) win. */
+@layer base {
+  a { color: var(--tok-link); text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 3px; }
+}
+
+/* Native dialog styling baseline */
+dialog::backdrop { background: rgba(11, 12, 12, 0.6); }
+
+@keyframes pulse-rec {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.rec-dot { animation: pulse-rec 1.2s ease-in-out infinite; }
+
+/* Print: confirmation page download fallback */
+@media print {
+  header, footer, nav, .no-print { display: none !important; }
+}
