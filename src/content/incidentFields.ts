@@ -17,6 +17,12 @@ export interface IncidentField {
   hintKey?: string;
   optional?: boolean;
   options?: { value: string; labelKey: string }[];
+  /**
+   * Date/datetime fields only: offer "I do not know the exact date or time",
+   * which swaps the input for a free-text "roughly when" note (stored under
+   * `<id>:note`, with `<id>:unsure` = 'yes').
+   */
+  allowUnsure?: boolean;
 }
 
 const YES_NO_PARTIALLY = [
@@ -29,13 +35,13 @@ const YES_NO_PARTIALLY = [
 const HARASSMENT_FIELDS: IncidentField[] = [
   { id: 'hr-platform', type: 'text', labelKey: 'media.fields.hrPlatform' },
   { id: 'hr-profile', type: 'url', labelKey: 'media.fields.hrProfile', optional: true },
-  { id: 'hr-since', type: 'date', labelKey: 'media.fields.hrSince', optional: true },
+  { id: 'hr-since', type: 'date', labelKey: 'media.fields.hrSince', optional: true, allowUnsure: true },
   { id: 'hr-what', type: 'textarea', labelKey: 'media.fields.hrWhat' },
 ];
 
 export const incidentFieldsByCategory: Record<CategoryId, IncidentField[]> = {
   'financial-fraud': [
-    { id: 'ff-when', type: 'datetime-local', labelKey: 'media.fields.ffWhen' },
+    { id: 'ff-when', type: 'datetime-local', labelKey: 'media.fields.ffWhen', allowUnsure: true },
     { id: 'ff-amount', type: 'number', labelKey: 'media.fields.ffAmount' },
     { id: 'ff-bank', type: 'text', labelKey: 'media.fields.ffBank', hintKey: 'media.fields.ffBankHint' },
     {
@@ -58,7 +64,7 @@ export const incidentFieldsByCategory: Record<CategoryId, IncidentField[]> = {
 
   'account-hacking': [
     { id: 'ah-platform', type: 'text', labelKey: 'media.fields.ahPlatform', hintKey: 'media.fields.ahPlatformHint' },
-    { id: 'ah-noticed', type: 'date', labelKey: 'media.fields.ahNoticed' },
+    { id: 'ah-noticed', type: 'date', labelKey: 'media.fields.ahNoticed', allowUnsure: true },
     { id: 'ah-access', type: 'select', labelKey: 'media.fields.ahAccess', options: YES_NO_PARTIALLY },
     { id: 'ah-recovery', type: 'text', labelKey: 'media.fields.ahRecovery', optional: true },
     { id: 'ah-logins', type: 'textarea', labelKey: 'media.fields.ahLogins', optional: true },
@@ -105,7 +111,7 @@ export const incidentFieldsByCategory: Record<CategoryId, IncidentField[]> = {
 
   ransomware: [
     { id: 'rw-device', type: 'text', labelKey: 'media.fields.rwDevice' },
-    { id: 'rw-when', type: 'date', labelKey: 'media.fields.rwWhen' },
+    { id: 'rw-when', type: 'date', labelKey: 'media.fields.rwWhen', allowUnsure: true },
     { id: 'rw-demand', type: 'textarea', labelKey: 'media.fields.rwDemand' },
     {
       id: 'rw-paid',
@@ -145,12 +151,12 @@ export const incidentFieldsByCategory: Record<CategoryId, IncidentField[]> = {
   /** Kept minimal and gentle: everything optional. */
   'sensitive-content': [
     { id: 'sc-platform', type: 'text', labelKey: 'media.fields.scPlatform', optional: true },
-    { id: 'sc-when', type: 'date', labelKey: 'media.fields.scWhen', optional: true },
+    { id: 'sc-when', type: 'date', labelKey: 'media.fields.scWhen', optional: true, allowUnsure: true },
     { id: 'sc-more', type: 'textarea', labelKey: 'media.fields.scMore', hintKey: 'media.fields.scMoreHint', optional: true },
   ],
 
   other: [
-    { id: 'ot-when', type: 'date', labelKey: 'media.fields.otWhen', optional: true },
+    { id: 'ot-when', type: 'date', labelKey: 'media.fields.otWhen', optional: true, allowUnsure: true },
     { id: 'ot-what', type: 'textarea', labelKey: 'media.fields.otWhat', optional: true },
   ],
 };

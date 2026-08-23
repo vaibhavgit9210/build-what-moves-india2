@@ -13,7 +13,7 @@ import { useDraft } from '@/state/DraftContext';
 import { nextPath, prevPath } from '@/lib/steps';
 import { incidentFieldsByCategory, type IncidentField } from '@/content/incidentFields';
 import { Button } from '@/components/ui/Button';
-import { TextInput, TextArea, Select } from '@/components/ui/Field';
+import { TextInput, TextArea, Select, Checkbox } from '@/components/ui/Field';
 import { PageTitle, ProgressSteps, ErrorSummary } from '@/components/ui/Misc';
 import type { CategoryId } from '@/lib/types';
 
@@ -60,8 +60,15 @@ export default function ReportDetails() {
   const validate = (): Record<string, string> => {
     const errs: Record<string, string> = {};
     const first = fields[0];
-    if (first && !first.optional && !(values[first.id] ?? '').trim()) {
-      errs[first.id] = t('media.details.errorRequired', { field: t(first.labelKey) });
+    if (first && !first.optional) {
+      const unsure = first.allowUnsure && values[`${first.id}:unsure`] === 'yes';
+      if (unsure) {
+        if (!(values[`${first.id}:note`] ?? '').trim()) {
+          errs[`${first.id}:note`] = t('media.details.whenNoteError');
+        }
+      } else if (!(values[first.id] ?? '').trim()) {
+        errs[first.id] = t('media.details.errorRequired', { field: t(first.labelKey) });
+      }
     }
     for (const f of fields) {
       const v = (values[f.id] ?? '').trim();
@@ -139,9 +146,9 @@ export default function ReportDetails() {
     // text / date / datetime-local / number / url — all via TextInput.
     const inputType = f.type === 'date' || f.type === 'datetime-local' ? f.type : 'text';
     const inputMode = f.type === 'number' ? ('decimal' as const) : f.type === 'url' ? ('url' as const) : undefined;
-    return (
+    const input = (
       <TextInput
-        key={f.id}
+        key={f.allowUnsure ? undefined : f.id}
         label={label}
         hint={hint}
         error={error}
@@ -151,6 +158,39 @@ export default function ReportDetails() {
         onChange={(e) => setValue(f.id, e.target.value)}
         onBlur={persist}
       />
+    );
+    if (!f.allowUnsure) return input;
+
+    // "I don't know the exact date/time": swap the input for a free-text
+    // "roughly when" note, with the reason-for-delay folded into the hint
+    // instead of living as an unrelated field elsewhere.
+    const unsure = values[`${f.id}:unsure`] === 'yes';
+    return (
+      <div key={f.id}>
+        {!unsure && input}
+        <Checkbox
+          label={t('media.details.unsureLabel')}
+          checked={unsure}
+          onChange={(v) => {
+            setValues((prev) => {
+              const next = { ...prev, [`${f.id}:unsure`]: v ? 'yes' : '' };
+              if (v) next[f.id] = '';
+              return next;
+            });
+          }}
+        />
+        {unsure && (
+          <TextArea
+            label={t('media.details.whenNoteLabel')}
+            hint={t('media.details.whenNoteHint')}
+            error={fieldErrors[`${f.id}:note`]}
+            rows={3}
+            value={values[`${f.id}:note`] ?? ''}
+            onChange={(e) => setValue(`${f.id}:note`, e.target.value)}
+            onBlur={persist}
+          />
+        )}
+      </div>
     );
   };
 

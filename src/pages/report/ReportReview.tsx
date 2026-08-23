@@ -211,6 +211,23 @@ export default function ReportReview() {
             value={draft.description?.text || notProvided}
           />
           {detailEntries.map(([fieldId, value]) => {
+            // "<id>:unsure" is a UI flag; "<id>:note" is the "roughly when"
+            // text shown under the base field's label.
+            if (fieldId.endsWith(':unsure')) return null;
+            if (fieldId.endsWith(':note')) {
+              const base = fieldById.get(fieldId.slice(0, -':note'.length));
+              return (
+                <Row
+                  key={fieldId}
+                  label={
+                    base
+                      ? `${t(base.labelKey)} (${t('media.details.reviewApprox')})`
+                      : humanize(fieldId)
+                  }
+                  value={value}
+                />
+              );
+            }
             const field = fieldById.get(fieldId);
             const option =
               field?.type === 'select' ? field.options?.find((o) => o.value === value) : undefined;

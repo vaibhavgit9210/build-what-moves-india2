@@ -54,6 +54,11 @@ export default {
     errorRequired: 'Please answer: {field}',
     errorNumber: 'Enter the amount in numbers only, for example 5000.',
     errorUrl: 'Enter a full link, for example https://example.com/page.',
+    unsureLabel: 'I do not know the exact date or time',
+    whenNoteLabel: 'Roughly when did it happen?',
+    whenNoteHint: 'For example "around mid July" or "about three weeks ago". If some time passed before you reported it, you can say why here. A delay never weakens your report.',
+    whenNoteError: 'Tell us roughly when it happened. Even a guess helps.',
+    reviewApprox: 'roughly when',
   },
   fields: {
     ffWhen: 'When did it happen?',
