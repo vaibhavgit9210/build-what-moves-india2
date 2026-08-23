@@ -34,6 +34,11 @@ function routeSequence(anonymous: boolean): { path: string; group: StepGroup }[]
   return anonymous ? ROUTE_SEQUENCE.filter((r) => r.group !== 'identity') : ROUTE_SEQUENCE;
 }
 
+/** First route of a step group, for jumping back from the progress stepper. */
+export function firstPathOfGroup(group: StepGroup, anonymous = false): string | null {
+  return routeSequence(anonymous).find((r) => r.group === group)?.path ?? null;
+}
+
 export function groupOf(path: string): StepGroup | null {
   return ROUTE_SEQUENCE.find((r) => r.path === path)?.group ?? null;
 }

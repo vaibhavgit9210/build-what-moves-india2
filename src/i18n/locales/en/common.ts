@@ -62,6 +62,7 @@ export default {
     evidence: 'Evidence',
     review: 'Review',
     stepOf: 'Step {current} of {total}',
+    goTo: 'Go back to {label}',
   },
   categories: {
     'financial-fraud': 'Online financial fraud',

@@ -1,9 +1,9 @@
 /** Small shared pieces: alerts, cards, page titles, progress, spinner, modal. */
 import { useEffect, useRef, type ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useI18n } from '@/i18n';
 import { useDraft } from '@/state/DraftContext';
-import { stepGroups, groupOf } from '@/lib/steps';
+import { stepGroups, groupOf, firstPathOfGroup } from '@/lib/steps';
 
 type AlertVariant = 'info' | 'success' | 'warning' | 'error' | 'emergency';
 
@@ -56,12 +56,19 @@ export function PageTitle({ caption, children }: { caption?: ReactNode; children
   );
 }
 
-/** The "Your report" progress indicator. Reads the current route and draft mode. */
+/**
+ * The "Your report" progress indicator. Reads the current route and draft
+ * mode. Completed steps are links, so the keyboard can jump back without
+ * losing anything (the draft persists every answer). On small screens the
+ * labels of other steps collapse away, leaving the numbers plus the
+ * "Step N of M: label" line.
+ */
 export function ProgressSteps() {
   const { t } = useI18n();
   const { pathname } = useLocation();
   const { draft } = useDraft();
-  const groups = stepGroups(draft?.mode === 'anonymous');
+  const anonymous = draft?.mode === 'anonymous';
+  const groups = stepGroups(anonymous);
   const current = groupOf(pathname);
   const currentIdx = groups.findIndex((g) => g.id === current);
   if (currentIdx < 0) return null;
@@ -69,27 +76,56 @@ export function ProgressSteps() {
     <nav aria-label={t('steps.heading')} className="mb-6">
       <p className="text-sm text-muted font-semibold mb-2">
         {t('steps.stepOf', { current: currentIdx + 1, total: groups.length })}
+        <span className="sm:hidden">: {t(groups[currentIdx].labelKey)}</span>
       </p>
       <ol className="flex flex-wrap gap-x-4 gap-y-1 text-sm sm:text-base p-0 m-0 list-none">
         {groups.map((g, i) => {
           const state = i < currentIdx ? 'done' : i === currentIdx ? 'current' : 'todo';
+          const backTo = state === 'done' ? firstPathOfGroup(g.id, anonymous) : null;
+          const circle = (
+            <span
+              aria-hidden="true"
+              className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold border-2 hc-border ${
+                state === 'done'
+                  ? 'bg-action text-actiontext border-action'
+                  : state === 'current'
+                    ? 'bg-ink text-page border-ink'
+                    : 'bg-page text-muted border-border'
+              }`}
+            >
+              {state === 'done' ? '✓' : i + 1}
+            </span>
+          );
+          const label = (
+            <span
+              className={`${state === 'current' ? 'font-bold' : state === 'done' ? '' : 'text-muted'} ${
+                state === 'current' ? '' : 'hidden sm:inline'
+              }`}
+            >
+              {t(g.labelKey)}
+            </span>
+          );
           return (
-            <li key={g.id} aria-current={state === 'current' ? 'step' : undefined} className="flex items-center gap-1.5">
-              <span
-                aria-hidden="true"
-                className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold border-2 hc-border ${
-                  state === 'done'
-                    ? 'bg-action text-actiontext border-action'
-                    : state === 'current'
-                      ? 'bg-ink text-page border-ink'
-                      : 'bg-page text-muted border-border'
-                }`}
-              >
-                {state === 'done' ? '✓' : i + 1}
-              </span>
-              <span className={state === 'current' ? 'font-bold' : state === 'done' ? '' : 'text-muted'}>
-                {t(g.labelKey)}
-              </span>
+            <li
+              key={g.id}
+              aria-current={state === 'current' ? 'step' : undefined}
+              className="flex items-center gap-1.5"
+            >
+              {backTo ? (
+                <Link
+                  to={backTo}
+                  aria-label={t('steps.goTo', { label: t(g.labelKey) })}
+                  className="flex items-center gap-1.5 text-ink hover:underline underline-offset-2"
+                >
+                  {circle}
+                  {label}
+                </Link>
+              ) : (
+                <>
+                  {circle}
+                  {label}
+                </>
+              )}
             </li>
           );
         })}

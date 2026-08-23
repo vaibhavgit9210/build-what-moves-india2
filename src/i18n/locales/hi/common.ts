@@ -62,6 +62,7 @@ export default {
     evidence: 'सबूत',
     review: 'समीक्षा',
     stepOf: 'चरण {current} / {total}',
+    goTo: 'वापस {label} पर जाएँ',
   },
   categories: {
     'financial-fraud': 'ऑनलाइन वित्तीय धोखाधड़ी',

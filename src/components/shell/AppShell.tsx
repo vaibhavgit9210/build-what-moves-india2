@@ -1,8 +1,12 @@
 /** Layout route: skip link, demo banner, header, main outlet, footer.
- * Also moves focus to <main> on route change for screen-reader users. */
-import { useEffect, useRef } from 'react';
+ * Also moves focus to <main> on route change for screen-reader users, and
+ * announces report-step changes through a persistent live region (a region
+ * that unmounts with the page would never be announced). */
+import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useI18n } from '@/i18n';
+import { useDraft } from '@/state/DraftContext';
+import { stepGroups, groupOf } from '@/lib/steps';
 import { Header } from './Header';
 
 function Footer() {
@@ -26,8 +30,10 @@ function Footer() {
 export default function AppShell() {
   const { t } = useI18n();
   const { pathname } = useLocation();
+  const { draft } = useDraft();
   const mainRef = useRef<HTMLElement>(null);
   const first = useRef(true);
+  const [stepAnnouncement, setStepAnnouncement] = useState('');
 
   useEffect(() => {
     if (first.current) {
@@ -37,6 +43,24 @@ export default function AppShell() {
     window.scrollTo(0, 0);
     mainRef.current?.focus({ preventScroll: true });
   }, [pathname]);
+
+  const anonymous = draft?.mode === 'anonymous';
+  useEffect(() => {
+    const group = groupOf(pathname);
+    if (!group) {
+      setStepAnnouncement('');
+      return;
+    }
+    const groups = stepGroups(anonymous);
+    const idx = groups.findIndex((g) => g.id === group);
+    if (idx < 0) {
+      setStepAnnouncement('');
+      return;
+    }
+    setStepAnnouncement(
+      `${t('steps.stepOf', { current: idx + 1, total: groups.length })}: ${t(groups[idx].labelKey)}`,
+    );
+  }, [pathname, anonymous, t]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -48,6 +72,9 @@ export default function AppShell() {
       </a>
       <p className="bg-focus text-focustext text-center text-sm font-bold px-3 py-1.5">
         {t('app.demoBanner')}
+      </p>
+      <p aria-live="polite" className="sr-only">
+        {stepAnnouncement}
       </p>
       <Header />
       <main id="main" ref={mainRef} tabIndex={-1} className="flex-1 outline-none">
