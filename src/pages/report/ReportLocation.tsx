@@ -91,6 +91,8 @@ export default function ReportLocation() {
   const showDetectedCard = autoLoc !== null && !showManual;
   const canContinue = showDetectedCard || showManual;
 
+  const anonymous = draft?.mode === 'anonymous';
+
   const handleContinue = () => {
     let finalAddress: Address;
     let method: LocationInfo['method'];
@@ -120,9 +122,9 @@ export default function ReportLocation() {
         ...(method === 'auto' && autoLoc ? { lat: autoLoc.lat, lon: autoLoc.lon } : {}),
       },
       consent: { ...(draft?.consent ?? {}), location: method === 'auto', technical: techConsent },
-      lastPath: '/report/identity',
+      lastPath: nextPath(THIS_PATH, anonymous) ?? '/report/identity',
     });
-    navigate(nextPath(THIS_PATH) ?? '/report/identity');
+    navigate(nextPath(THIS_PATH, anonymous) ?? '/report/identity');
   };
 
   const errorList = Object.values(errors).filter((e): e is string => Boolean(e));

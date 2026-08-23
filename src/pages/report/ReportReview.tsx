@@ -133,18 +133,19 @@ export default function ReportReview() {
     : '';
   const detailEntries = Object.entries(draft.incidentDetails).filter(([, v]) => v !== '');
   const notProvided = t('dash.review.notProvided');
-  const back = prevPath('/report/review');
+  const anonymous = draft.mode === 'anonymous';
+  const back = prevPath('/report/review', anonymous);
 
   const onSubmit = () => {
     if (!confirmed) {
       setError(t('dash.review.confirmError'));
       return;
     }
-    if (!user) return;
+    if (!user && !anonymous) return;
     setSubmitError(false);
     setSubmitting(true);
     try {
-      const report = submitDraft(user, lang);
+      const report = submitDraft(anonymous ? null : user, lang);
       navigate('/report/success', { state: { reportId: report.id } });
     } catch {
       setSubmitting(false);
@@ -160,21 +161,28 @@ export default function ReportReview() {
 
       <ErrorSummary errors={error ? [error] : []} />
 
-      <SectionCard title={t('dash.review.aboutYou')} editTo="/report/identity">
-        <dl className="m-0">
-          <Row label={t('dash.review.name')} value={draft.identity?.name || notProvided} />
-          <Row
-            label={t('dash.review.idType')}
-            value={draft.identity ? t(`docTypes.${draft.identity.docType}`) : notProvided}
-          />
-          <Row
-            label={t('dash.review.idNumber')}
-            value={draft.identity?.idNumber || notProvided}
-          />
-          <Row label={t('docTypes.mobile')} value={user?.mobile || notProvided} />
-          <Row label={t('docTypes.email')} value={user?.email || notProvided} />
-        </dl>
-      </SectionCard>
+      {anonymous ? (
+        <SectionCard title={t('dash.review.aboutYou')}>
+          <p className="mb-1 font-medium">{t('dash.review.anonymousRow')}</p>
+          <p className="text-sm text-muted mb-0">{t('dash.review.anonymousNote')}</p>
+        </SectionCard>
+      ) : (
+        <SectionCard title={t('dash.review.aboutYou')} editTo="/report/identity">
+          <dl className="m-0">
+            <Row label={t('dash.review.name')} value={draft.identity?.name || notProvided} />
+            <Row
+              label={t('dash.review.idType')}
+              value={draft.identity ? t(`docTypes.${draft.identity.docType}`) : notProvided}
+            />
+            <Row
+              label={t('dash.review.idNumber')}
+              value={draft.identity?.idNumber || notProvided}
+            />
+            <Row label={t('docTypes.mobile')} value={user?.mobile || notProvided} />
+            <Row label={t('docTypes.email')} value={user?.email || notProvided} />
+          </dl>
+        </SectionCard>
+      )}
 
       <SectionCard title={t('dash.review.location')} editTo="/report/location">
         <dl className="m-0">

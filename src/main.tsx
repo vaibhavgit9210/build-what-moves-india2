@@ -15,6 +15,8 @@ async function boot() {
   //   ?e2e=reset  — wipe all demo storage
   //   ?e2e=login  — sign in as the demo account without the form
   //   ?e2e=draft  — sign in AND seed a filled-in in-progress draft report
+  //   ?e2e=anon   — seed the same draft as an ANONYMOUS journey (no login,
+  //                 no identity step)
   const params = new URLSearchParams(window.location.search);
   const e2e = params.get('e2e');
   if (e2e === 'reset') clearAll();
@@ -22,10 +24,11 @@ async function boot() {
   await seedDemoData();
 
   if (e2e === 'login' || e2e === 'draft') saveJSON(KEYS.session, 'u-rahul');
-  if (e2e === 'draft') {
+  if (e2e === 'draft' || e2e === 'anon') {
     saveJSON(KEYS.draft, {
       startedAt: new Date().toISOString(),
       lastPath: '/report/review',
+      mode: e2e === 'anon' ? 'anonymous' : 'tracked',
       consent: { location: true, technical: true },
       location: {
         method: 'auto',
@@ -34,10 +37,14 @@ async function boot() {
           city: 'Bengaluru', district: 'Bengaluru Urban', state: 'Karnataka', pin: '560034',
         },
       },
-      identity: {
-        method: 'upload', docType: 'aadhaar', name: 'Rahul Sharma',
-        idNumber: 'XXXX XXXX 1234', dob: '14 May 1998', fileName: 'aadhaar-front.jpg',
-      },
+      ...(e2e === 'anon'
+        ? {}
+        : {
+            identity: {
+              method: 'upload', docType: 'aadhaar', name: 'Rahul Sharma',
+              idNumber: 'XXXX XXXX 1234', dob: '14 May 1998', fileName: 'aadhaar-front.jpg',
+            },
+          }),
       answers: { danger: 'no', money: 'yes', access: 'no', threats: 'no', message: 'yes', crypto: 'no', ransom: 'no', sensitive: 'no' },
       category: 'financial-fraud',
       priority: 'immediate',

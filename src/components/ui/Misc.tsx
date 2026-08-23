@@ -2,7 +2,8 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useI18n } from '@/i18n';
-import { STEP_GROUPS, groupOf } from '@/lib/steps';
+import { useDraft } from '@/state/DraftContext';
+import { stepGroups, groupOf } from '@/lib/steps';
 
 type AlertVariant = 'info' | 'success' | 'warning' | 'error' | 'emergency';
 
@@ -55,20 +56,22 @@ export function PageTitle({ caption, children }: { caption?: ReactNode; children
   );
 }
 
-/** The five-step "Your report" progress indicator. Reads the current route. */
+/** The "Your report" progress indicator. Reads the current route and draft mode. */
 export function ProgressSteps() {
   const { t } = useI18n();
   const { pathname } = useLocation();
+  const { draft } = useDraft();
+  const groups = stepGroups(draft?.mode === 'anonymous');
   const current = groupOf(pathname);
-  const currentIdx = STEP_GROUPS.findIndex((g) => g.id === current);
+  const currentIdx = groups.findIndex((g) => g.id === current);
   if (currentIdx < 0) return null;
   return (
     <nav aria-label={t('steps.heading')} className="mb-6">
       <p className="text-sm text-muted font-semibold mb-2">
-        {t('steps.stepOf', { current: currentIdx + 1, total: STEP_GROUPS.length })}
+        {t('steps.stepOf', { current: currentIdx + 1, total: groups.length })}
       </p>
       <ol className="flex flex-wrap gap-x-4 gap-y-1 text-sm sm:text-base p-0 m-0 list-none">
-        {STEP_GROUPS.map((g, i) => {
+        {groups.map((g, i) => {
           const state = i < currentIdx ? 'done' : i === currentIdx ? 'current' : 'todo';
           return (
             <li key={g.id} aria-current={state === 'current' ? 'step' : undefined} className="flex items-center gap-1.5">

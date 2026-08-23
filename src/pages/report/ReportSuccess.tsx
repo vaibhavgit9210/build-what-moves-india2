@@ -21,9 +21,10 @@ export default function ReportSuccess() {
     return listReports(user.id)[0] ?? null;
   }, [state, user]);
 
-  if (!report) return <Navigate to="/dashboard" replace />;
+  if (!report) return <Navigate to={user ? '/dashboard' : '/'} replace />;
 
   const category = categoryById(report.category);
+  const anonymous = Boolean(report.anonymous);
 
   const downloadConfirmation = () => {
     const lines = [
@@ -80,6 +81,12 @@ export default function ReportSuccess() {
         </Alert>
       )}
 
+      {anonymous && (
+        <Alert variant="warning" title={t('dash.success.anonTitle')}>
+          <p className="m-0">{t('dash.success.anonSaveRef')}</p>
+        </Alert>
+      )}
+
       <h2 className="text-xl font-bold mb-2">{t('dash.success.summaryTitle')}</h2>
       <p className="text-sm text-muted mb-3">{t('dash.success.saveRefHint')}</p>
       <dl className="m-0 mb-8 border-t border-border">
@@ -100,13 +107,21 @@ export default function ReportSuccess() {
       </dl>
 
       <div className="flex flex-col sm:flex-row gap-3">
-        <ButtonLink to={`/reports/${report.id}`}>{t('dash.success.track')}</ButtonLink>
-        <Button variant="secondary" onClick={downloadConfirmation}>
+        {!anonymous && (
+          <ButtonLink to={`/reports/${report.id}`}>{t('dash.success.track')}</ButtonLink>
+        )}
+        <Button variant={anonymous ? 'primary' : 'secondary'} onClick={downloadConfirmation}>
           {t('dash.success.downloadConfirmation')}
         </Button>
-        <ButtonLink variant="secondary" to="/dashboard">
-          {t('dash.success.goToDashboard')}
-        </ButtonLink>
+        {anonymous ? (
+          <ButtonLink variant="secondary" to="/">
+            {t('dash.success.backHome')}
+          </ButtonLink>
+        ) : (
+          <ButtonLink variant="secondary" to="/dashboard">
+            {t('dash.success.goToDashboard')}
+          </ButtonLink>
+        )}
       </div>
     </div>
   );

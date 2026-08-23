@@ -58,6 +58,9 @@ export default function ReportIdentity() {
   const photoInput = useRef<HTMLInputElement>(null);
   const uploadInput = useRef<HTMLInputElement>(null);
 
+  // Anonymous journeys have no identity step at all.
+  if (draft?.mode === 'anonymous') return <Navigate to="/report/questions" replace />;
+
   if (!draft) return <Navigate to="/report" replace />;
 
   const handleFile = (file: File | undefined, m: 'photo' | 'upload') => {

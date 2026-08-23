@@ -1,38 +1,57 @@
 /**
  * /report — public pre-journey page. Explains what will happen, shows the
  * emergency helplines, offers to resume an in-progress draft, and starts the
- * journey (via login first when signed out).
+ * journey. The user chooses here between reporting anonymously (no account,
+ * no tracking) and registering to track, with the tradeoff spelled out in
+ * plain language before anything is asked of them.
  */
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/i18n';
 import { useAuth } from '@/state/AuthContext';
 import { useDraft } from '@/state/DraftContext';
 import { Button } from '@/components/ui/Button';
-import { Alert, Card, PageTitle } from '@/components/ui/Misc';
+import { RadioGroup } from '@/components/ui/Field';
+import { Alert, Card, ErrorSummary, PageTitle } from '@/components/ui/Misc';
+import type { ReportMode } from '@/lib/types';
 
 const FIRST_STEP = '/report/location';
 
 export default function ReportStart() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const { draft, hasDraft, startDraft, clearDraft } = useDraft();
+  const { draft, hasDraft, startDraft, updateDraft, clearDraft } = useDraft();
   const navigate = useNavigate();
+  const [mode, setMode] = useState<ReportMode | ''>('');
+  const [error, setError] = useState<string | undefined>(undefined);
+  const [showCompare, setShowCompare] = useState(false);
 
   const begin = () => {
-    if (!user) {
+    if (!mode) {
+      setError(t('flow.start.modeError'));
+      return;
+    }
+    setError(undefined);
+    if (mode === 'tracked' && !user) {
+      // Remember the choice so the draft survives the sign-in detour.
+      startDraft();
+      updateDraft({ mode });
       navigate(`/login?next=${encodeURIComponent(FIRST_STEP)}`);
       return;
     }
     startDraft();
+    updateDraft({ mode, lastPath: FIRST_STEP });
     navigate(FIRST_STEP);
   };
 
   const startOver = () => {
     clearDraft();
-    begin();
+    setMode('');
   };
 
   const stepKeys = ['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'step7'] as const;
+  const anonPoints = ['anonPoint1', 'anonPoint2', 'anonPoint3', 'anonPoint4'] as const;
+  const trackPoints = ['trackPoint1', 'trackPoint2', 'trackPoint3'] as const;
 
   return (
     <div className="max-w-2xl">
@@ -82,10 +101,66 @@ export default function ReportStart() {
 
       {!hasDraft && (
         <>
+          <ErrorSummary errors={error ? [error] : []} />
+
+          <RadioGroup
+            big
+            legend={t('flow.start.modeLegend')}
+            hint={t('flow.start.modeHint')}
+            error={error}
+            options={[
+              {
+                value: 'tracked',
+                label: t('flow.start.modeTracked'),
+                hint: t('flow.start.modeTrackedHint'),
+              },
+              {
+                value: 'anonymous',
+                label: t('flow.start.modeAnonymous'),
+                hint: t('flow.start.modeAnonymousHint'),
+              },
+            ]}
+            value={mode}
+            onChange={(v) => {
+              setMode(v as ReportMode);
+              setError(undefined);
+            }}
+            name="report-mode"
+          />
+
+          <p className="mb-4">
+            <button
+              type="button"
+              className="text-link underline underline-offset-2 font-medium cursor-pointer"
+              aria-expanded={showCompare}
+              onClick={() => setShowCompare((s) => !s)}
+            >
+              {t('flow.start.compareToggle')}
+            </button>
+          </p>
+          {showCompare && (
+            <Card className="mb-6 bg-surface">
+              <h3 className="text-lg font-bold mb-2">{t('flow.start.modeAnonymous')}</h3>
+              <ul className="list-disc pl-5 mb-4 space-y-1">
+                {anonPoints.map((k) => (
+                  <li key={k}>{t(`flow.start.${k}`)}</li>
+                ))}
+              </ul>
+              <h3 className="text-lg font-bold mb-2">{t('flow.start.modeTracked')}</h3>
+              <ul className="list-disc pl-5 mb-0 space-y-1">
+                {trackPoints.map((k) => (
+                  <li key={k}>{t(`flow.start.${k}`)}</li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
           <Button onClick={begin} fullWidth className="sm:w-auto">
             {t('flow.start.startButton')}
           </Button>
-          {!user && <p className="text-sm text-muted mt-3">{t('flow.start.signInNote')}</p>}
+          {!user && mode === 'tracked' && (
+            <p className="text-sm text-muted mt-3">{t('flow.start.signInNote')}</p>
+          )}
         </>
       )}
     </div>

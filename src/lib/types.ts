@@ -48,6 +48,12 @@ export type CategoryId =
  */
 export type Priority = 'emergency' | 'immediate' | 'standard';
 
+/**
+ * anonymous = no account, no identity step; the report cannot be tracked
+ *             or followed up. tracked = signed in, saved to the account.
+ */
+export type ReportMode = 'anonymous' | 'tracked';
+
 export type Answer = 'yes' | 'no' | 'unsure';
 /** Keyed by decision-tree question id. */
 export type DecisionAnswers = Record<string, Answer>;
@@ -118,6 +124,10 @@ export interface DraftReport {
   startedAt: string;
   /** Last route the user was on, for "continue where you left off". */
   lastPath: string;
+  /** Absent on drafts from before the chooser existed; treat as 'tracked'. */
+  mode?: ReportMode;
+  /** User chose "I already know the category" instead of the questions. */
+  triageSkipped?: boolean;
   consent: { location?: boolean; technical?: boolean };
   location?: LocationInfo;
   identity?: IdentityInfo;
@@ -160,7 +170,10 @@ export interface TimelineEvent {
 export interface Report {
   id: string;
   refNumber: string;
-  userId: string;
+  /** Absent on anonymous reports. */
+  userId?: string;
+  /** Submitted without an account; cannot be tracked or followed up. */
+  anonymous?: boolean;
   category: CategoryId;
   priority: Priority;
   submittedAt: string; // ISO

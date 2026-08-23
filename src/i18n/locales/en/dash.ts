@@ -23,6 +23,8 @@ export default {
     description: 'Description',
     incidentDetails: 'Incident details',
     notProvided: 'Not provided',
+    anonymousRow: 'You are reporting anonymously.',
+    anonymousNote: 'No name, ID or contact details are included in this report. Once submitted, it cannot be tracked and nobody can contact you about it.',
     evidenceNone: 'No evidence added',
     evidenceOne: '1 item attached',
     evidenceMany: '{count} items attached',
@@ -49,6 +51,9 @@ export default {
     downloadConfirmation: 'Download confirmation',
     goToDashboard: 'Go to dashboard',
     fileTitle: 'Report confirmation (prototype, demo data only)',
+    anonTitle: 'You reported anonymously',
+    anonSaveRef: 'Because no account or contact details are attached, this report cannot be tracked and nobody will contact you about it. Save or download the reference number now; it is the only record you will have.',
+    backHome: 'Back to home',
   },
   dashboard: {
     greeting: 'Hello, {name}',

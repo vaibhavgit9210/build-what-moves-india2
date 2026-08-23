@@ -1,7 +1,8 @@
 /**
- * The report journey. Routes are grouped into the five visible progress
- * steps. Pages navigate with nextPath()/prevPath() so the order lives in
- * exactly one place.
+ * The report journey. Routes are grouped into the visible progress steps.
+ * Pages navigate with nextPath()/prevPath() so the order lives in exactly
+ * one place. Anonymous journeys skip the identity step entirely, so every
+ * helper takes an `anonymous` flag (defaults to the tracked journey).
  */
 import type { StepGroup } from '@/lib/types';
 
@@ -25,16 +26,26 @@ export const ROUTE_SEQUENCE: { path: string; group: StepGroup }[] = [
   { path: '/report/review', group: 'review' },
 ];
 
+export function stepGroups(anonymous = false): { id: StepGroup; labelKey: string }[] {
+  return anonymous ? STEP_GROUPS.filter((g) => g.id !== 'identity') : STEP_GROUPS;
+}
+
+function routeSequence(anonymous: boolean): { path: string; group: StepGroup }[] {
+  return anonymous ? ROUTE_SEQUENCE.filter((r) => r.group !== 'identity') : ROUTE_SEQUENCE;
+}
+
 export function groupOf(path: string): StepGroup | null {
   return ROUTE_SEQUENCE.find((r) => r.path === path)?.group ?? null;
 }
 
-export function nextPath(path: string): string | null {
-  const i = ROUTE_SEQUENCE.findIndex((r) => r.path === path);
-  return i >= 0 && i < ROUTE_SEQUENCE.length - 1 ? ROUTE_SEQUENCE[i + 1].path : null;
+export function nextPath(path: string, anonymous = false): string | null {
+  const seq = routeSequence(anonymous);
+  const i = seq.findIndex((r) => r.path === path);
+  return i >= 0 && i < seq.length - 1 ? seq[i + 1].path : null;
 }
 
-export function prevPath(path: string): string | null {
-  const i = ROUTE_SEQUENCE.findIndex((r) => r.path === path);
-  return i > 0 ? ROUTE_SEQUENCE[i - 1].path : null;
+export function prevPath(path: string, anonymous = false): string | null {
+  const seq = routeSequence(anonymous);
+  const i = seq.findIndex((r) => r.path === path);
+  return i > 0 ? seq[i - 1].path : null;
 }

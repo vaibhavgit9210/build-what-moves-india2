@@ -7,6 +7,7 @@ import { createHashRouter, Navigate, useLocation } from 'react-router-dom';
 import AppShell from '@/components/shell/AppShell';
 import { Spinner } from '@/components/ui/Misc';
 import { useAuth } from '@/state/AuthContext';
+import { useDraft } from '@/state/DraftContext';
 
 const Landing = lazy(() => import('@/pages/Landing'));
 const Help = lazy(() => import('@/pages/Help'));
@@ -47,8 +48,26 @@ function RequireAuth({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+/** Report steps: signed-in users OR an in-progress anonymous draft. */
+function RequireReportAccess({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const { draft } = useDraft();
+  const location = useLocation();
+  if (!user && draft?.mode !== 'anonymous') {
+    const next = encodeURIComponent(location.pathname);
+    return <Navigate to={`/login?next=${next}`} replace />;
+  }
+  return <>{children}</>;
+}
+
 const wrap = (node: ReactNode, protect = false) => (
   <Suspense fallback={<Spinner />}>{protect ? <RequireAuth>{node}</RequireAuth> : node}</Suspense>
+);
+
+const wrapReport = (node: ReactNode) => (
+  <Suspense fallback={<Spinner />}>
+    <RequireReportAccess>{node}</RequireReportAccess>
+  </Suspense>
 );
 
 export const router = createHashRouter([
@@ -69,16 +88,16 @@ export const router = createHashRouter([
       { path: '/settings', element: wrap(<Settings />, true) },
 
       { path: '/report', element: wrap(<ReportStart />) },
-      { path: '/report/location', element: wrap(<ReportLocation />, true) },
-      { path: '/report/identity', element: wrap(<ReportIdentity />, true) },
-      { path: '/report/questions', element: wrap(<ReportQuestions />, true) },
-      { path: '/report/category', element: wrap(<ReportCategory />, true) },
-      { path: '/report/guidance', element: wrap(<ReportGuidance />, true) },
-      { path: '/report/description', element: wrap(<ReportDescription />, true) },
-      { path: '/report/details', element: wrap(<ReportDetails />, true) },
-      { path: '/report/evidence', element: wrap(<ReportEvidence />, true) },
-      { path: '/report/review', element: wrap(<ReportReview />, true) },
-      { path: '/report/success', element: wrap(<ReportSuccess />, true) },
+      { path: '/report/location', element: wrapReport(<ReportLocation />) },
+      { path: '/report/identity', element: wrapReport(<ReportIdentity />) },
+      { path: '/report/questions', element: wrapReport(<ReportQuestions />) },
+      { path: '/report/category', element: wrapReport(<ReportCategory />) },
+      { path: '/report/guidance', element: wrapReport(<ReportGuidance />) },
+      { path: '/report/description', element: wrapReport(<ReportDescription />) },
+      { path: '/report/details', element: wrapReport(<ReportDetails />) },
+      { path: '/report/evidence', element: wrapReport(<ReportEvidence />) },
+      { path: '/report/review', element: wrapReport(<ReportReview />) },
+      { path: '/report/success', element: wrap(<ReportSuccess />) },
 
       { path: '/dashboard', element: wrap(<Dashboard />, true) },
       { path: '/reports/:id', element: wrap(<ReportDetail />, true) },

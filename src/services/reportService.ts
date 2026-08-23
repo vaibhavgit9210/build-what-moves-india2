@@ -32,7 +32,7 @@ export function trackReport(refNumber: string): Report | null {
 
 export function submitReport(
   draft: DraftReport,
-  user: User,
+  user: User | null,
   technical: TechnicalInfo | undefined,
   lang: string,
 ): Report {
@@ -41,7 +41,7 @@ export function submitReport(
   const report: Report = {
     id: uid(),
     refNumber: makeRefNumber(now),
-    userId: user.id,
+    ...(user ? { userId: user.id } : { anonymous: true }),
     category: draft.category ?? 'other',
     priority: draft.priority ?? 'standard',
     submittedAt: now.toISOString(),

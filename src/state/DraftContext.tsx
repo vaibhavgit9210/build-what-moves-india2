@@ -37,8 +37,8 @@ interface DraftValue {
   /** Shallow-merge a patch into the draft and persist. */
   updateDraft: (patch: Partial<DraftReport>) => void;
   clearDraft: () => void;
-  /** Turn the draft into a submitted report and clear it. */
-  submitDraft: (user: User, lang: string) => Report;
+  /** Turn the draft into a submitted report and clear it. Pass null for anonymous. */
+  submitDraft: (user: User | null, lang: string) => Report;
 }
 
 const DraftContext = createContext<DraftValue | null>(null);
@@ -78,7 +78,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const submitDraft = useCallback(
-    (user: User, lang: string): Report => {
+    (user: User | null, lang: string): Report => {
       // Prefer in-memory state: localStorage may be unavailable (private
       // mode, quota) even though the journey worked entirely in memory.
       const d = draft ?? loadJSON<DraftReport | null>(KEYS.draft, null);

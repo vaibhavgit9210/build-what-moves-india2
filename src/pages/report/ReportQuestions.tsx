@@ -26,6 +26,7 @@ export default function ReportQuestions() {
 
   if (!draft) return <Navigate to="/report" replace />;
 
+  const anonymous = draft.mode === 'anonymous';
   const answers = draft.answers;
   const vis = visibleQuestions(answers);
   const i = Math.max(0, Math.min(idx, vis.length - 1));
@@ -87,8 +88,14 @@ export default function ReportQuestions() {
       setIdx(i - 1);
       return;
     }
-    const prev = prevPath(PATH);
+    const prev = prevPath(PATH, anonymous);
     if (prev) navigate(prev);
+  };
+
+  const onSkip = () => {
+    setError(undefined);
+    updateDraft({ triageSkipped: true, lastPath: '/report/category' });
+    navigate('/report/category');
   };
 
   return (
@@ -132,6 +139,18 @@ export default function ReportQuestions() {
           {t('common.back')}
         </Button>
       </div>
+
+      {i === 0 && (
+        <p className="mt-6">
+          <button
+            type="button"
+            onClick={onSkip}
+            className="text-link underline underline-offset-2 font-medium cursor-pointer"
+          >
+            {t('tree.questions.skipLink')}
+          </button>
+        </p>
+      )}
     </div>
   );
 }
