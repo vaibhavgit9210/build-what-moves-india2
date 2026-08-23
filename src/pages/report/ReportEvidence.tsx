@@ -13,9 +13,10 @@ import { nextPath, prevPath } from '@/lib/steps';
 import { uid } from '@/lib/id';
 import { ingestFiles } from '@/lib/evidence';
 import { Button } from '@/components/ui/Button';
-import { TextInput, TextArea } from '@/components/ui/Field';
+import { TextInput } from '@/components/ui/Field';
 import { Alert, Card, PageTitle, ProgressSteps } from '@/components/ui/Misc';
 import EvidenceDrop from '@/components/report/EvidenceDrop';
+import VoiceTextArea from '@/components/report/VoiceTextArea';
 import type { EvidenceKind, EvidenceMeta } from '@/lib/types';
 
 const THIS_PATH = '/report/evidence';
@@ -262,12 +263,12 @@ export default function ReportEvidence() {
         </>
       )}
 
-      <TextArea
+      <VoiceTextArea
         label={`${t('media.evidence.notesLabel')} (${t('common.optional')})`}
         hint={t('media.evidence.notesHint')}
         rows={4}
         value={notes}
-        onChange={(e) => setNotes(e.target.value)}
+        onText={setNotes}
         onBlur={() => updateDraft({ extraNotes: notes.trim() ? notes : undefined })}
       />
 

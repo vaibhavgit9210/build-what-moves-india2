@@ -75,6 +75,10 @@ export default {
     errorPlatforms: 'Select at least one place where it happened',
     handleLabel: 'Link or username on {platform} (optional)',
   },
+  dictation: {
+    toggle: 'Speak instead of typing',
+    hint: 'Record, then your words appear as text in the box above, where you can check and edit them before continuing.',
+  },
   platforms: {
     whatsapp: 'WhatsApp',
     instagram: 'Instagram',

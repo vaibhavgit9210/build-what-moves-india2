@@ -75,6 +75,10 @@ export default {
     errorPlatforms: 'कम से कम एक जगह चुनें जहाँ यह हुआ',
     handleLabel: '{platform} पर लिंक या यूज़रनेम (वैकल्पिक)',
   },
+  dictation: {
+    toggle: 'लिखने के बजाय बोलें',
+    hint: 'रिकॉर्ड करें; आपके शब्द ऊपर वाले बॉक्स में टेक्स्ट बनकर आ जाएँगे, जहाँ आगे बढ़ने से पहले आप उन्हें जाँच और बदल सकते हैं।',
+  },
   platforms: {
     whatsapp: 'WhatsApp',
     instagram: 'Instagram',

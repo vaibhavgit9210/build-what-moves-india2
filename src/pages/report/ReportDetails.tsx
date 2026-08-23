@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button';
 import { TextInput, TextArea, Select, Checkbox } from '@/components/ui/Field';
 import { PageTitle, ProgressSteps, ErrorSummary } from '@/components/ui/Misc';
 import PlatformPicker from '@/components/report/PlatformPicker';
+import VoiceTextArea from '@/components/report/VoiceTextArea';
 import type { CategoryId } from '@/lib/types';
 
 const THIS_PATH = '/report/details';
@@ -139,14 +140,14 @@ export default function ReportDetails() {
 
     if (f.type === 'textarea') {
       return (
-        <TextArea
+        <VoiceTextArea
           key={f.id}
           label={label}
           hint={hint}
           error={error}
           rows={4}
           value={value}
-          onChange={(e) => setValue(f.id, e.target.value)}
+          onText={(text) => setValue(f.id, text)}
           onBlur={persist}
         />
       );
