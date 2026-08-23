@@ -133,6 +133,11 @@ function nearestCity(lat: number, lon: number): DemoCity {
   return best;
 }
 
+/** Demo reverse geocode: snap a map pin to the nearest synthetic city. */
+export function reverseGeocode(lat: number, lon: number): DemoCity {
+  return nearestCity(lat, lon);
+}
+
 export type GeoError = 'denied' | 'unavailable' | 'timeout';
 
 /**

@@ -3,18 +3,21 @@
  * automatic), manual address entry, a clearly-labeled demo-city picker, and
  * an optional technical-information consent.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useI18n } from '@/i18n';
 import { useDraft } from '@/state/DraftContext';
 import { nextPath } from '@/lib/steps';
-import { detectLocation, DEMO_CITIES, type GeoError } from '@/services/geoService';
+import { detectLocation, reverseGeocode, DEMO_CITIES, type GeoError } from '@/services/geoService';
 import { getTechnicalInfo } from '@/services/deviceService';
 import { Button } from '@/components/ui/Button';
 import { Select, Checkbox } from '@/components/ui/Field';
 import { Alert, Card, PageTitle, ProgressSteps, Spinner, ErrorSummary } from '@/components/ui/Misc';
 import AddressForm, { type AddressErrors } from '@/components/report/AddressForm';
 import type { Address, LocationInfo } from '@/lib/types';
+
+// Leaflet only ships to browsers that open the map.
+const LocationMap = lazy(() => import('@/components/report/LocationMap'));
 
 const THIS_PATH = '/report/location';
 
@@ -49,6 +52,13 @@ export default function ReportLocation() {
   const [demoCity, setDemoCity] = useState('');
   const [errors, setErrors] = useState<AddressErrors>({});
   const [techConsent, setTechConsent] = useState(draft?.consent.technical ?? false);
+  const [showMap, setShowMap] = useState(saved?.method === 'map');
+  const [mapPin, setMapPin] = useState<{ lat: number; lon: number } | null>(
+    saved?.method === 'map' && saved.lat != null && saved.lon != null
+      ? { lat: saved.lat, lon: saved.lon }
+      : null,
+  );
+  const [mapPlace, setMapPlace] = useState('');
 
   const tech = useMemo(() => (techConsent ? getTechnicalInfo(true) : null), [techConsent]);
 
@@ -75,6 +85,25 @@ export default function ReportLocation() {
     const city = DEMO_CITIES.find((c) => c.id === id);
     if (!city) return;
     setAddress(city.location.address);
+    setAutoLoc(null);
+    setGeoError(null);
+    setShowManual(true);
+  };
+
+  const handleMapPick = (lat: number, lon: number) => {
+    const city = reverseGeocode(lat, lon);
+    const a = city.location.address;
+    setMapPin({ lat, lon });
+    setMapPlace(`${a.city}, ${a.state}`);
+    // A pin gives the area, not the house: fill the area fields, leave the
+    // rest for the user, and open the form so they can check and complete it.
+    setAddress({
+      ...EMPTY_ADDRESS,
+      city: a.city,
+      district: a.district,
+      state: a.state,
+      pin: a.pin,
+    });
     setAutoLoc(null);
     setGeoError(null);
     setShowManual(true);
@@ -113,13 +142,14 @@ export default function ReportLocation() {
       setErrors(errs);
       if (Object.keys(errs).length > 0) return;
       finalAddress = { ...address, pin: address.pin.trim() };
-      method = 'manual';
+      method = mapPin ? 'map' : 'manual';
     }
     updateDraft({
       location: {
         method,
         address: finalAddress,
         ...(method === 'auto' && autoLoc ? { lat: autoLoc.lat, lon: autoLoc.lon } : {}),
+        ...(method === 'map' && mapPin ? { lat: mapPin.lat, lon: mapPin.lon } : {}),
       },
       consent: { ...(draft?.consent ?? {}), location: method === 'auto', technical: techConsent },
       lastPath: nextPath(THIS_PATH, anonymous) ?? '/report/identity',
@@ -153,12 +183,31 @@ export default function ReportLocation() {
         <Button onClick={handleDetect} disabled={detecting}>
           {t('flow.location.useMyLocation')}
         </Button>
+        <Button variant="secondary" onClick={() => setShowMap((s) => !s)} aria-expanded={showMap}>
+          {t('flow.location.mapToggle')}
+        </Button>
         {!showManual && (
           <Button variant="secondary" onClick={handleEditAddress}>
             {t('flow.location.enterManually')}
           </Button>
         )}
       </div>
+
+      {showMap && (
+        <section className="mb-6">
+          <p className="text-muted mb-2">{t('flow.location.mapIntro')}</p>
+          <Suspense fallback={<Spinner />}>
+            <LocationMap lat={mapPin?.lat} lon={mapPin?.lon} onPick={handleMapPick} />
+          </Suspense>
+          {/* Persistent live region so pin drops are announced. */}
+          <p role="status" className={mapPlace ? 'mt-2 font-medium' : 'sr-only'}>
+            {mapPlace
+              ? `${t('common.demoData')}: ${t('flow.location.mapPicked', { place: mapPlace })}`
+              : ''}
+          </p>
+          <p className="text-sm text-muted mt-2">{t('flow.location.mapKeyboardNote')}</p>
+        </section>
+      )}
 
       {/* Persistent live region: always mounted so screen readers announce the
           text change; the visual spinner below is decorative. */}

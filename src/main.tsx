@@ -31,11 +31,13 @@ async function boot() {
       mode: e2e === 'anon' ? 'anonymous' : 'tracked',
       consent: { location: true, technical: true },
       location: {
-        method: 'auto',
+        // The anon seed exercises the map-picker path.
+        method: e2e === 'anon' ? 'map' : 'auto',
         address: {
           house: '221, 4th Block', street: '80 Feet Road', locality: 'Koramangala',
           city: 'Bengaluru', district: 'Bengaluru Urban', state: 'Karnataka', pin: '560034',
         },
+        ...(e2e === 'anon' ? { lat: 12.9352, lon: 77.6245 } : {}),
       },
       ...(e2e === 'anon'
         ? {}

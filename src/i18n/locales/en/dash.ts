@@ -24,6 +24,7 @@ export default {
     incidentDetails: 'Incident details',
     notProvided: 'Not provided',
     anonymousRow: 'You are reporting anonymously.',
+    chosenOnMap: 'Chosen on a map',
     anonymousNote: 'No name, ID or contact details are included in this report. Once submitted, it cannot be tracked and nobody can contact you about it.',
     evidenceNone: 'No evidence added',
     evidenceOne: '1 item attached',

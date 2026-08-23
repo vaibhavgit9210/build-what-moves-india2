@@ -69,7 +69,8 @@ export interface Address {
 }
 
 export interface LocationInfo {
-  method: 'auto' | 'manual';
+  /** auto = browser geolocation, map = pin chosen on the map, manual = typed. */
+  method: 'auto' | 'manual' | 'map';
   address: Address;
   lat?: number;
   lon?: number;

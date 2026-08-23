@@ -195,7 +195,9 @@ export default function ReportReview() {
           <p className="text-sm text-muted mt-2 mb-0">
             {draft.location.method === 'auto'
               ? t('dash.review.detectedAuto')
-              : t('dash.review.enteredManually')}
+              : draft.location.method === 'map'
+                ? t('dash.review.chosenOnMap')
+                : t('dash.review.enteredManually')}
           </p>
         )}
       </SectionCard>
