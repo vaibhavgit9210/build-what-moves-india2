@@ -47,6 +47,8 @@ export default {
     chooseHint: 'Pick the closest match. Each option has a short plain-language description.',
     chooseError: 'Select the type of incident to continue',
     answerInstead: 'Not sure? Answer a few simple questions instead.',
+    legalToggle: 'What does this cover legally?',
+    legalNote: 'A plain-language summary, not legal advice.',
     captionChosen: 'Your report is about:',
     reassure: 'This is a suggested category. You can change it before submitting.',
     changeBtn: 'Change category',

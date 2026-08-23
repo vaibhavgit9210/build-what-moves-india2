@@ -13,7 +13,7 @@ import { nextPath, prevPath } from '@/lib/steps';
 import { CATEGORIES, categoryById } from '@/content/categories';
 import { Button } from '@/components/ui/Button';
 import { RadioGroup } from '@/components/ui/Field';
-import { Alert, ErrorSummary, PageTitle, ProgressSteps } from '@/components/ui/Misc';
+import { Alert, Card, ErrorSummary, PageTitle, ProgressSteps } from '@/components/ui/Misc';
 import type { CategoryId } from '@/lib/types';
 
 const PATH = '/report/category';
@@ -24,6 +24,7 @@ export default function ReportCategory() {
   const navigate = useNavigate();
   const [changing, setChanging] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
+  const [showLegal, setShowLegal] = useState(false);
   // Skipped the questions: browse the full list. Sticky for the visit so the
   // list does not collapse the moment a category is picked.
   const [browsing] = useState(() => !draft?.category && Boolean(draft?.triageSkipped));
@@ -96,6 +97,27 @@ export default function ReportCategory() {
             </a>
           </p>
         </Alert>
+      )}
+
+      {def && (
+        <div className="mb-6">
+          <button
+            type="button"
+            className="text-link underline underline-offset-2 font-medium cursor-pointer"
+            aria-expanded={showLegal}
+            onClick={() => setShowLegal((s) => !s)}
+          >
+            {t('tree.category.legalToggle')}
+          </button>
+          {showLegal && (
+            <Card className="mt-3 bg-surface">
+              <p className="text-sm font-semibold uppercase tracking-wide text-muted mb-2">
+                {t('tree.category.legalNote')}
+              </p>
+              <p className="mb-0">{t(def.legalKey)}</p>
+            </Card>
+          )}
+        </div>
       )}
 
       {(changing || browsing) && (
