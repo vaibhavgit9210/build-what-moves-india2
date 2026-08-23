@@ -21,6 +21,14 @@ import type { DescriptionInfo } from '@/lib/types';
 
 const THIS_PATH = '/report/description';
 
+/** Characters the real NCRP backend rejects; we warn live instead of failing late. */
+const DISALLOWED = /[~!#^'`$|{}<>*]/g;
+const CHAR_GOAL = 200;
+
+function foundDisallowed(text: string): string[] {
+  return [...new Set(text.match(DISALLOWED) ?? [])];
+}
+
 export default function ReportDescription() {
   const { t, lang } = useI18n();
   const { draft, updateDraft } = useDraft();
@@ -52,6 +60,7 @@ export default function ReportDescription() {
 
   const [errors, setErrors] = useState<string[]>([]);
   const [quickAddErrors, setQuickAddErrors] = useState<string[]>([]);
+  const [showExample, setShowExample] = useState(false);
 
   const runTranscription = useCallback(
     async (blob: Blob, language: string, dur?: number) => {
@@ -140,6 +149,61 @@ export default function ReportDescription() {
     );
   };
 
+  /**
+   * Live feedback under a narrative textarea: character count towards the
+   * 200-character goal, and a gentle warning listing any characters the
+   * official portal would reject (kept as persistently-mounted status
+   * regions so screen readers hear the changes).
+   */
+  const liveFeedback = (text: string) => {
+    const count = text.length;
+    const found = foundDisallowed(text);
+    return (
+      <div className="-mt-3 mb-5 max-w-2xl">
+        <p className={`text-sm mb-1 ${count >= CHAR_GOAL ? 'text-muted' : 'font-medium'}`}>
+          {t('media.description.charCount', { count })}{' '}
+          {count >= CHAR_GOAL
+            ? t('media.description.charGoalMet')
+            : t('media.description.charGoal', { goal: CHAR_GOAL })}
+        </p>
+        <p
+          role="status"
+          className={
+            found.length > 0
+              ? 'rounded-md bg-warnbg border-l-4 border-warn hc-border px-3 py-2 text-sm'
+              : 'sr-only'
+          }
+        >
+          {found.length > 0
+            ? t('media.description.disallowedWarning', { chars: found.join(' ') })
+            : ''}
+        </p>
+      </div>
+    );
+  };
+
+  const exampleBlock = (
+    <div className="mb-6 max-w-2xl">
+      <button
+        type="button"
+        className="text-link underline underline-offset-2 font-medium cursor-pointer"
+        aria-expanded={showExample}
+        onClick={() => setShowExample((s) => !s)}
+      >
+        {t('media.description.exampleToggle')}
+      </button>
+      {showExample && (
+        <div className="mt-3 rounded-md border-2 border-border hc-border p-4 bg-surface">
+          <p className="font-bold mb-1">{t('media.description.exampleVagueTitle')}</p>
+          <p className="mb-3 text-muted">"{t('media.description.exampleVague')}"</p>
+          <p className="font-bold mb-1">{t('media.description.exampleGoodTitle')}</p>
+          <p className="mb-3">"{t('media.description.exampleGood')}"</p>
+          <p className="text-sm text-muted mb-0">{t('media.description.exampleWhy')}</p>
+        </div>
+      )}
+    </div>
+  );
+
   const languageOptions = (
     <>
       <option value="en">{t('media.description.langEn')}</option>
@@ -173,6 +237,8 @@ export default function ReportDescription() {
             value={typedText}
             onChange={(e) => setTypedText(e.target.value)}
           />
+          {liveFeedback(typedText)}
+          {exampleBlock}
           <Select
             label={t('media.description.languageLabel')}
             value={typedLang}
@@ -242,6 +308,7 @@ export default function ReportDescription() {
                 value={voiceText}
                 onChange={(e) => setVoiceText(e.target.value)}
               />
+              {liveFeedback(voiceText)}
               <Select
                 label={t('media.stt.transcriptLangLabel')}
                 value={voiceLang}
