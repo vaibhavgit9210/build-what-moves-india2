@@ -10,8 +10,8 @@ import type { Lang } from '@/lib/types';
 
 function navClass({ isActive }: { isActive: boolean }) {
   return (
-    'block px-3 py-2 rounded-sm font-medium no-underline text-brandtext hover:bg-white/10 ' +
-    (isActive ? 'border-b-4 border-focus font-bold' : 'border-b-4 border-transparent')
+    'block px-3 py-2 font-medium no-underline text-link hover:bg-surface ' +
+    (isActive ? 'border-b-4 border-action font-bold text-ink' : 'border-b-4 border-transparent')
   );
 }
 
@@ -105,7 +105,7 @@ export function Header() {
 
   const utilities = (
     <div className="flex items-center gap-2 flex-wrap">
-      <label className="flex items-center gap-1.5 text-brandtext text-sm">
+      <label className="flex items-center gap-1.5 text-ink text-sm">
         <span className="sr-only">{t('nav.language')}</span>
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="12" cy="12" r="9" />
@@ -114,7 +114,7 @@ export function Header() {
         <select
           value={lang}
           onChange={(e) => setLang(e.target.value as Lang)}
-          className="bg-brand text-brandtext border border-white/40 rounded-sm px-1.5 py-1 text-sm cursor-pointer"
+          className="bg-page text-ink border border-border rounded-sm px-1.5 py-1 text-sm cursor-pointer"
           aria-label={t('nav.language')}
         >
           {LANGS.map((l) => (
@@ -126,7 +126,7 @@ export function Header() {
       </label>
       <button
         onClick={() => setA11yOpen(true)}
-        className="text-brandtext text-sm border border-white/40 rounded-sm px-2.5 py-1.5 hover:bg-white/10 cursor-pointer"
+        className="text-ink text-sm border border-border rounded-sm px-2.5 py-1.5 hover:bg-surface cursor-pointer"
       >
         {t('nav.accessibility')}
       </button>
@@ -135,7 +135,7 @@ export function Header() {
           <button
             onClick={() => setAcctOpen((v) => !v)}
             aria-expanded={acctOpen}
-            className="text-brandtext text-sm font-semibold border border-white/40 rounded-sm px-2.5 py-1.5 hover:bg-white/10 cursor-pointer"
+            className="text-ink text-sm font-semibold border border-border rounded-sm px-2.5 py-1.5 hover:bg-surface cursor-pointer"
           >
             {user.name.split(' ')[0]} ▾
           </button>
@@ -162,7 +162,7 @@ export function Header() {
           )}
         </div>
       ) : (
-        <Link to="/login" className="text-brandtext text-sm font-semibold border border-white/40 rounded-sm px-2.5 py-1.5 no-underline hover:bg-white/10">
+        <Link to="/login" className="text-ink text-sm font-semibold border border-border rounded-sm px-2.5 py-1.5 no-underline hover:bg-surface">
           {t('nav.login')}
         </Link>
       )}
@@ -170,18 +170,18 @@ export function Header() {
   );
 
   return (
-    <header className="bg-brand text-brandtext border-b-4 border-saffron">
+    <header className="bg-page text-ink border-b border-border">
       <div className="mx-auto max-w-5xl px-4">
         <div className="flex items-center justify-between gap-3 py-3">
-          <Link to="/" className="flex items-center gap-2.5 no-underline text-brandtext shrink-0">
-            <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <Link to="/" className="flex items-center gap-2.5 no-underline text-ink shrink-0">
+            <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-brand">
               <path d="M12 2.5 4 6v6c0 5 3.4 8.3 8 9.5 4.6-1.2 8-4.5 8-9.5V6l-8-3.5z" />
               <path d="M9 12.2l2.2 2.2L15.5 10" />
             </svg>
             <span className="leading-tight">
               <span className="block font-bold text-lg">{t('app.name')}</span>
-              <span className="block text-xs opacity-90">
-                {t('app.tagline')} · <span className="bg-saffron text-white font-bold px-1 rounded-sm">{t('app.prototypeTag')}</span>
+              <span className="block text-xs text-muted">
+                {t('app.tagline')} · <span className="font-semibold">{t('app.prototypeTag')}</span>
               </span>
             </span>
           </Link>
@@ -189,7 +189,7 @@ export function Header() {
           <div className="hidden md:block">{utilities}</div>
 
           <button
-            className="md:hidden text-brandtext border border-white/50 rounded-sm px-3 py-2 font-semibold cursor-pointer"
+            className="md:hidden text-ink border border-border rounded-sm px-3 py-2 font-semibold cursor-pointer"
             aria-expanded={menuOpen}
             aria-controls="mobile-nav"
             onClick={() => setMenuOpen((v) => !v)}
@@ -208,7 +208,7 @@ export function Header() {
       </div>
 
       {menuOpen && (
-        <nav id="mobile-nav" aria-label={t('nav.primaryNav')} className="md:hidden border-t border-white/20 px-4 py-3 flex flex-col gap-1">
+        <nav id="mobile-nav" aria-label={t('nav.primaryNav')} className="md:hidden border-t border-border px-4 py-3 flex flex-col gap-1">
           {links.map((l) => (
             <NavLink key={l.to} to={l.to} className={navClass} onClick={() => setMenuOpen(false)}>
               {l.label}
@@ -219,7 +219,7 @@ export function Header() {
               {t('nav.profile')}
             </NavLink>
           )}
-          <div className="pt-3 border-t border-white/20 mt-2">{utilities}</div>
+          <div className="pt-3 border-t border-border mt-2">{utilities}</div>
         </nav>
       )}
 

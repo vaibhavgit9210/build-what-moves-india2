@@ -123,7 +123,7 @@ export default function ReportDescription() {
     if (prev) navigate(prev);
   };
 
-  const modeButton = (m: 'typed' | 'voice', label: string, hint: string, icon: string) => {
+  const modeButton = (m: 'typed' | 'voice', label: string, hint: string) => {
     const selected = mode === m;
     return (
       <button
@@ -135,9 +135,6 @@ export default function ReportDescription() {
         }`}
       >
         <span className="text-lg font-bold">
-          <span aria-hidden="true" className="mr-2">
-            {icon}
-          </span>
           {label}
           {selected && (
             <span className="ml-2 text-sm font-semibold" aria-hidden="true">
@@ -235,8 +232,8 @@ export default function ReportDescription() {
       <fieldset className="border-0 p-0 mb-6">
         <legend className="text-base font-semibold mb-2">{t('media.description.modeLegend')}</legend>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
-          {modeButton('typed', t('media.description.modeTyped'), t('media.description.modeTypedHint'), '📝')}
-          {modeButton('voice', t('media.description.modeVoice'), t('media.description.modeVoiceHint'), '🎙️')}
+          {modeButton('typed', t('media.description.modeTyped'), t('media.description.modeTypedHint'))}
+          {modeButton('voice', t('media.description.modeVoice'), t('media.description.modeVoiceHint'))}
         </div>
       </fieldset>
 

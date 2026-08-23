@@ -73,8 +73,8 @@ export default function AppShell() {
       >
         {t('app.skipToContent')}
       </a>
-      <p className="bg-focus text-focustext text-center text-sm font-bold px-3 py-1.5">
-        {t('app.demoBanner')}
+      <p className="bg-surface text-ink text-xs px-4 py-1.5 border-b border-border m-0">
+        <span className="mx-auto max-w-5xl block">{t('app.demoBanner')}</span>
       </p>
       <p aria-live="polite" className="sr-only">
         {stepAnnouncement}

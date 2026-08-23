@@ -21,15 +21,6 @@ import type { EvidenceKind, EvidenceMeta } from '@/lib/types';
 
 const THIS_PATH = '/report/evidence';
 
-const KIND_ICONS: Record<EvidenceKind, string> = {
-  screenshot: '📷',
-  chat: '💬',
-  document: '📄',
-  url: '🔗',
-  video: '🎥',
-  other: '📎',
-};
-
 const FILE_KINDS: { kind: EvidenceKind; accept: string }[] = [
   { kind: 'screenshot', accept: 'image/*' },
   { kind: 'chat', accept: '' },
@@ -141,13 +132,10 @@ export default function ReportEvidence() {
       type="button"
       onClick={onClick}
       aria-pressed={kind === 'url' ? pressed : undefined}
-      className={`flex flex-col items-center justify-center gap-1 rounded-md border-2 hc-border p-4 min-h-[80px] cursor-pointer text-center ${
+      className={`flex items-center justify-center rounded-md border-2 hc-border p-4 min-h-[60px] cursor-pointer text-center ${
         kind === 'url' && pressed ? 'border-ink bg-surface' : 'border-border bg-page hover:bg-surface'
       }`}
     >
-      <span aria-hidden="true" className="text-2xl">
-        {KIND_ICONS[kind]}
-      </span>
       <span className="text-sm font-semibold">{t(`media.evidence.kinds.${kind}`)}</span>
     </button>
   );
@@ -234,9 +222,6 @@ export default function ReportEvidence() {
                   <Card className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm text-muted mb-0.5">
-                        <span aria-hidden="true" className="mr-1">
-                          {KIND_ICONS[item.kind]}
-                        </span>
                         {t(`media.evidence.kinds.${item.kind}`)}
                         {item.size !== undefined && ` · ${humanSize(item.size)}`}
                       </p>

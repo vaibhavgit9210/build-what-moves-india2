@@ -1,9 +1,11 @@
 @import "tailwindcss";
 
 /*
- * Design tokens — GOV.UK-inspired restraint, Indian public-service palette.
- * Everything references CSS custom properties so the high-contrast mode can
- * swap values under html[data-contrast="high"] without touching components.
+ * Design tokens — GOV.UK-inspired restraint, styled after the plain
+ * government look of police.gov.sg: white chrome, deep navy accents, thin
+ * rules, no decorative color. Everything references CSS custom properties so
+ * the high-contrast mode can swap values under html[data-contrast="high"]
+ * without touching components.
  */
 @theme {
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans",
@@ -40,12 +42,12 @@
   --tok-surface: #f3f4f6;
   --tok-border: #b5bcc4;
   --tok-muted: #4b5563;
-  --tok-link: #1d4ed8;
-  --tok-linkvisited: #5b21b6;
-  --tok-brand: #12263f;
+  --tok-link: #1c4c7c;
+  --tok-linkvisited: #47365e;
+  --tok-brand: #10508c;
   --tok-brandtext: #ffffff;
-  --tok-action: #046a38;
-  --tok-actionhover: #024e29;
+  --tok-action: #10508c;
+  --tok-actionhover: #0c3f6e;
   --tok-actiontext: #ffffff;
   --tok-focus: #ffdd00;
   --tok-focustext: #0b0c0c;
@@ -55,8 +57,8 @@
   --tok-successbg: #eefaf2;
   --tok-warn: #8a5a00;
   --tok-warnbg: #fdf6e3;
-  --tok-info: #1d4ed8;
-  --tok-infobg: #eef4fd;
+  --tok-info: #1c4c7c;
+  --tok-infobg: #eef3f9;
   --tok-saffron: #c2540a;
 }
 

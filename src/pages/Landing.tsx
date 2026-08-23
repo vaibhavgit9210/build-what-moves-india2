@@ -30,7 +30,7 @@ export default function Landing() {
       </div>
 
       {hasDraft && draft && (
-        <Card className="mb-10 border-l-8 border-l-saffron max-w-2xl">
+        <Card className="mb-10 border-l-8 border-l-brand max-w-2xl">
           <h2 className="text-xl font-bold mb-1">{t('resume.title')}</h2>
           <p className="mb-4">{t('resume.body')}</p>
           <div className="flex flex-col sm:flex-row gap-3">

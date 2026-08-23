@@ -65,7 +65,6 @@ export default function VoiceTextArea({
           onClick={() => setShowRecorder((s) => !s)}
           className="text-link underline underline-offset-2 font-medium cursor-pointer"
         >
-          <span aria-hidden="true" className="mr-1.5">🎙️</span>
           {t('media.dictation.toggle')}
         </button>
         {showRecorder && (
