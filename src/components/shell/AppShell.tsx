@@ -2,12 +2,15 @@
  * Also moves focus to <main> on route change for screen-reader users, and
  * announces report-step changes through a persistent live region (a region
  * that unmounts with the page would never be announced). */
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useI18n } from '@/i18n';
 import { useDraft } from '@/state/DraftContext';
 import { stepGroups, groupOf } from '@/lib/steps';
 import { Header } from './Header';
+
+// In-form help: only shipped to browsers that enter the report journey.
+const HelpPanel = lazy(() => import('@/components/report/HelpPanel'));
 
 function Footer() {
   const { t } = useI18n();
@@ -82,6 +85,11 @@ export default function AppShell() {
           <Outlet />
         </div>
       </main>
+      {pathname.startsWith('/report') && (
+        <Suspense fallback={null}>
+          <HelpPanel />
+        </Suspense>
+      )}
       <Footer />
     </div>
   );

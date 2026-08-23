@@ -5,5 +5,6 @@ import flow from './flow';
 import tree from './tree';
 import media from './media';
 import dash from './dash';
+import helpPanel from './helpPanel';
 
-export default { ...common, publicPages, auth, flow, tree, media, dash };
+export default { ...common, publicPages, auth, flow, tree, media, dash, helpPanel };
