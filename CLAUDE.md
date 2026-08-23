@@ -36,6 +36,24 @@ disappears; do not ask them to pick a branch there again.
 ## Shape
 
 - Vite base `/build-what-moves-india2/`, HashRouter (deep links work on Pages).
+- **Two report modes** chosen on /report: `draft.mode = 'tracked' | 'anonymous'`.
+  Anonymous skips the identity step everywhere (steps.ts helpers take an
+  `anonymous` flag; stepper shows 4 steps; report gets `anonymous: true`, no
+  `userId`; Track answers honestly instead of showing status). The triage
+  questions are skippable ("I already know the category" → browse-first list).
+- Location has a Leaflet + OSM pin picker (`leaflet` npm dep, lazy chunk;
+  pins snap to the nearest synthetic demo city via `reverseGeocode`, no real
+  geocoding; `location.method` gained `'map'`). Needs network for tiles only.
+- `draft.platforms` = multi-select where-it-happened picker (chips + per
+  -platform handle) used by harassment/social-media/impersonation/hacking/
+  sensitive categories. Date fields with `allowUnsure` store `<id>:unsure` /
+  `<id>:note` in incidentDetails.
+- **In-form help**: floating "Need help?" on /report/* (per-step FAQ + a
+  stateless assistant). `worker/` = `sahayata-help` Cloudflare Worker calling
+  the Anthropic API (claude-opus-5, wrangler secret ANTHROPIC_API_KEY, NOT
+  deployed; see worker/README.md). `HELP_ENDPOINT` in
+  `src/services/helpService.ts` is null → clearly-labeled demo answers.
+  The assistant never receives draft/complaint data by design.
 - `src/services/*` = the mock backend seam (auth, reports, geo, ocr, stt,
   device). `sttService` runs Whisper-tiny in-browser via
   `@huggingface/transformers` (lazy chunk, model downloads from HF hub on first
@@ -48,9 +66,9 @@ disappears; do not ask them to pick a branch there again.
   per-category incident form defs in `content/incidentFields.ts` (field ids are
   prefixed, e.g. `ff-amount`; labels resolve through `labelKey`, never
   humanize the id).
-- i18n: en + hi, 7 namespace files per locale under `src/i18n/locales/`,
-  flattened to dotted keys; `t()` falls back en → key. Keep key trees in
-  parity (740 keys each as of Aug 2026). **No em/en dashes in any copy** (user
+- i18n: en + hi, 8 namespace files per locale under `src/i18n/locales/`
+  (incl. `helpPanel`), flattened to dotted keys; `t()` falls back en → key.
+  Keep key trees in parity (~880 keys each as of Aug 2026). **No em/en dashes in any copy** (user
   rule). Demo login `demo@example.com` / `Demo@123` (deliberately public).
 - Accessibility settings = data attributes on `<html>` + token swap in
   `global.css`. Note the Tailwind v4 trap that bit us once: element-level CSS
@@ -60,7 +78,9 @@ disappears; do not ask them to pick a branch there again.
 
 `?e2e=reset` wipe storage · `?e2e=login` sign in demo user ·
 `?e2e=draft` sign in + seed a full financial-fraud draft (works for every
-/report/* step incl. review) · `?lang=hi` Hindi. Example:
+/report/* step incl. review) · `?e2e=anon` same draft as an ANONYMOUS
+journey (no login, no identity, location method 'map' so the Leaflet map
+opens pre-pinned) · `?lang=hi` Hindi. Example:
 `…/build-what-moves-india2/?e2e=draft#/report/review`.
 Headless Chrome: pages are rAF-free; use `--virtual-time-budget=8000
 --timeout=20000` and a fresh `--user-data-dir` per run (Chrome sometimes hangs
