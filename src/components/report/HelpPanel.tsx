@@ -54,9 +54,8 @@ export default function HelpPanel() {
         type="button"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
-        className="fixed bottom-4 right-4 z-40 rounded-full bg-brand text-brandtext font-bold px-5 py-3 min-h-[44px] shadow-lg border-2 border-brand hc-border cursor-pointer hover:opacity-90"
+        className="fixed bottom-4 right-4 z-40 rounded-sm bg-brand text-brandtext font-semibold px-5 py-3 min-h-[44px] shadow-md border border-brand hc-border cursor-pointer hover:bg-actionhover"
       >
-        <span aria-hidden="true" className="mr-1.5">?</span>
         {t('helpPanel.button')}
       </button>
 
@@ -89,11 +88,11 @@ export default function HelpPanel() {
         <Alert variant="info">
           <p className="m-0 text-sm">{t('helpPanel.assistant.privacyNote')}</p>
         </Alert>
-        {!HELP_ENDPOINT && (
-          <p className="text-sm text-muted mb-3">
-            {t('common.demoData')}: {t('helpPanel.assistant.demoNote')}
-          </p>
-        )}
+        <p className="text-sm text-muted mb-3">
+          {HELP_ENDPOINT
+            ? t('helpPanel.assistant.aiNote')
+            : `${t('common.demoData')}: ${t('helpPanel.assistant.demoNote')}`}
+        </p>
 
         <div aria-live="polite">
           {exchanges.map((x, i) => (

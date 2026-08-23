@@ -1,18 +1,17 @@
 /**
- * The "Need help?" assistant seam. When HELP_ENDPOINT is set, questions go to
- * the sahayata-help Cloudflare Worker (see worker/), which calls the
- * Anthropic API server-side; the key never touches the client. When it is
- * null, or the worker fails, a clearly-labeled DEMO fallback answers from a
- * small set of canned, keyword-matched responses so the UX can be exercised
- * without any backend.
+ * The "Need help?" assistant seam. Questions go to the sahayata-help
+ * Cloudflare Worker (see worker/), which answers server-side via the Groq
+ * API when its GROQ_API_KEY secret is set, falling back to keyless Workers
+ * AI; no key ever touches the client. If the worker fails, a clearly-labeled
+ * DEMO fallback answers from a small set of canned, keyword-matched
+ * responses so the UX still works offline.
  *
  * The assistant is stateless and never receives the draft, evidence or
  * personal details: only the user's typed question and the UI language.
  */
 
-// TODO: after deploying worker/ with an ANTHROPIC_API_KEY secret, set this to
-// e.g. 'https://sahayata-help.vaibhavpro9210.workers.dev/ask'.
-export const HELP_ENDPOINT: string | null = null;
+export const HELP_ENDPOINT: string | null =
+  'https://sahayata-help.vaibhavpro9210.workers.dev/ask';
 
 export interface HelpAnswer {
   /** 'live' = worker/Anthropic; 'demo' = canned local answer. */

@@ -1,28 +1,34 @@
 # sahayata-help worker
 
-Serverless backend for the in-form "Need help?" assistant. A stateless
-Cloudflare Worker that forwards one question at a time to the Anthropic API
-(model `claude-opus-5`) with a system prompt that limits it to process,
-navigation and general safety questions. It never receives complaint text,
-evidence or personal details, and its prompt refuses to engage with any that
-a user pastes in by hand.
+Serverless backend for the in-form "Need help?" assistant. A stateless,
+dependency-free Cloudflare Worker (vaibhavpro9210 account) that forwards one
+question at a time to:
 
-## Deploy
+1. **Groq** (`llama-3.3-70b-versatile`) when the `GROQ_API_KEY` secret is set;
+2. **Workers AI** (`@cf/meta/llama-3.3-70b-instruct-fp8-fast`) via the keyless
+   `[ai]` binding otherwise, so it runs free with zero setup (same pattern as
+   the ananta-brain worker). Note: `@cf/meta/llama-3.1-8b-instruct` was
+   deprecated May 2026; do not switch back to it.
+
+The system prompt limits it to process, navigation and general safety
+questions. It never receives complaint text, evidence or personal details,
+and refuses to engage with any that a user pastes in by hand.
+
+Deployed at: `https://sahayata-help.vaibhavpro9210.workers.dev`
+(the frontend's `HELP_ENDPOINT` in `src/services/helpService.ts` points at
+`/ask`; any worker error makes the frontend fall back to labeled demo answers).
+
+## Deploy / update
 
 ```bash
 cd worker
-npm install
-npx wrangler deploy                       # Cloudflare account: vaibhavpro9210
-npx wrangler secret put ANTHROPIC_API_KEY # required
+npx wrangler deploy
+npx wrangler secret put GROQ_API_KEY   # optional, upgrades answers to Groq
 ```
-
-Then point the frontend at it: set `HELP_ENDPOINT` in
-`src/services/helpService.ts` to `https://sahayata-help.<account>.workers.dev/ask`.
 
 ## TODO before real use
 
-- Put an ANTHROPIC_API_KEY secret in place (no key is available in the dev
-  environment; until then the frontend uses its clearly-labeled demo answers).
+- Set the GROQ_API_KEY secret (free tier) so Groq handles answers.
 - Tighten `Access-Control-Allow-Origin` to the site origin.
 - Add a per-IP daily limit (KV), mirroring the ananta-brain worker, before
   sharing the URL widely.
@@ -30,6 +36,5 @@ Then point the frontend at it: set `HELP_ENDPOINT` in
 ## API
 
 `POST /ask` with `{"question": "...", "lang": "en" | "hi"}` →
-`{"answer": "...", "provider": "anthropic"}`.
-Errors: 400 bad request, 429 rate limited, 502 upstream, 503 not configured
-(no key). The frontend treats every error as "fall back to demo answers".
+`{"answer": "...", "provider": "groq" | "workers-ai"}`.
+Errors: 400 bad request, 502 upstream, 503 not configured.

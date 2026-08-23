@@ -2,17 +2,20 @@
  * sahayata-help — the "Need help?" assistant behind the Cyber Sahayata
  * prototype. POST /ask {question, lang} -> {answer, provider}.
  *
+ * Providers, in order:
+ *   1. Groq (llama-3.3-70b-versatile) when the GROQ_API_KEY secret is set.
+ *   2. Workers AI (llama-3.1-8b-instruct) via the keyless [ai] binding, so
+ *      the assistant works free with zero setup, same pattern as ananta-brain.
+ *
  * Deliberately STATELESS and firewalled from the report: the frontend never
  * sends complaint text, evidence or personal details here, and the system
  * prompt refuses to work with any that a user pastes in by hand. It only
  * explains the reporting process, site navigation, and general safety and
  * legal information.
  *
- * Deploy: cd worker && npm install && npx wrangler deploy
- * Secret: npx wrangler secret put ANTHROPIC_API_KEY
- * Then set HELP_ENDPOINT in src/services/helpService.ts to the workers.dev URL.
+ * Deploy: cd worker && npx wrangler deploy
+ * Optional: npx wrangler secret put GROQ_API_KEY
  */
-import Anthropic from '@anthropic-ai/sdk';
 
 const SYSTEM = `You are the help assistant for "Cyber Sahayata", a DEMO prototype of a redesigned Indian cybercrime reporting portal. You sit in a small "Need help?" panel next to the report form.
 
@@ -25,7 +28,7 @@ Hard rules:
 - You CANNOT see the user's complaint, and you must never ask for it. If the user pastes personal details, account numbers, or their incident story, do NOT engage with the specifics; gently remind them that this chat cannot see or store their complaint and that those details belong in the form itself.
 - This is a demo: no real complaint is filed with the Government of India. Say so if asked whether it is real.
 - Anonymous reports here cannot be tracked and nobody can contact the reporter back; never promise otherwise.
-- Be calm, plain-language and brief (2-5 short sentences). No legal advice; suggest consulting a lawyer or calling the helplines for case-specific questions.
+- Be calm, plain-language and brief (2-5 short sentences). No emojis. No legal advice; suggest consulting a lawyer or calling the helplines for case-specific questions.
 - If someone may be in immediate danger, tell them to call 112 first.
 - Answer in the language of the question (English or Hindi).`;
 
@@ -41,12 +44,43 @@ const json = (body, status = 200) =>
     headers: { 'Content-Type': 'application/json', ...CORS },
   });
 
+async function askGroq(env, messages) {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${env.GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages,
+      max_tokens: 400,
+      temperature: 0.3,
+    }),
+  });
+  if (!res.ok) throw new Error(`groq ${res.status}`);
+  const data = await res.json();
+  const text = data?.choices?.[0]?.message?.content?.trim();
+  if (!text) throw new Error('groq empty');
+  return { answer: text, provider: 'groq' };
+}
+
+async function askWorkersAi(env, messages) {
+  const data = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+    messages,
+    max_tokens: 400,
+    temperature: 0.3,
+  });
+  const text = (data?.response ?? '').trim();
+  if (!text) throw new Error('workers-ai empty');
+  return { answer: text, provider: 'workers-ai' };
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     const url = new URL(request.url);
     if (request.method !== 'POST' || url.pathname !== '/ask') return json({ error: 'not-found' }, 404);
-    if (!env.ANTHROPIC_API_KEY) return json({ error: 'not-configured' }, 503);
 
     let body;
     try {
@@ -58,28 +92,26 @@ export default {
     if (!question || question.length > 600) return json({ error: 'bad-request' }, 400);
     const lang = body?.lang === 'hi' ? 'Hindi' : 'English';
 
-    const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
-    try {
-      // Stateless by design: one question in, one answer out, no history.
-      const msg = await client.messages.create({
-        model: 'claude-opus-5',
-        max_tokens: 600,
-        output_config: { effort: 'low' },
-        system: SYSTEM,
-        messages: [{ role: 'user', content: `(Answer in ${lang}.) ${question}` }],
-      });
-      if (msg.stop_reason === 'refusal') return json({ error: 'refused' }, 502);
-      const answer = msg.content
-        .filter((b) => b.type === 'text')
-        .map((b) => b.text)
-        .join('\n')
-        .trim();
-      if (!answer) return json({ error: 'upstream' }, 502);
-      return json({ answer, provider: 'anthropic' });
-    } catch (err) {
-      if (err instanceof Anthropic.RateLimitError) return json({ error: 'rate-limited' }, 429);
-      if (err instanceof Anthropic.APIError) return json({ error: 'upstream' }, 502);
-      return json({ error: 'upstream' }, 502);
+    // Stateless by design: one question in, one answer out, no history.
+    const messages = [
+      { role: 'system', content: SYSTEM },
+      { role: 'user', content: `(Answer in ${lang}.) ${question}` },
+    ];
+
+    if (env.GROQ_API_KEY) {
+      try {
+        return json(await askGroq(env, messages));
+      } catch {
+        // Fall through to Workers AI.
+      }
     }
+    if (env.AI) {
+      try {
+        return json(await askWorkersAi(env, messages));
+      } catch {
+        return json({ error: 'upstream' }, 502);
+      }
+    }
+    return json({ error: 'not-configured' }, 503);
   },
 };

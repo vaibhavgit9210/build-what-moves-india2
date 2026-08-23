@@ -57,6 +57,7 @@ export default {
     heading: 'Ask the assistant',
     privacyNote: 'This assistant cannot see your complaint and does not need to. Do not paste personal or bank details here; those belong in the form itself.',
     demoNote: 'No AI service is connected in this prototype, so answers come from a small built-in list.',
+    aiNote: 'Answers are generated automatically and can be wrong. For anything important, check the Get help page or call the helplines.',
     inputLabel: 'Your question',
     inputHint: 'About the process only, for example "Is this really anonymous?"',
     ask: 'Ask',

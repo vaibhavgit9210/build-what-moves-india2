@@ -49,11 +49,16 @@ disappears; do not ask them to pick a branch there again.
   sensitive categories. Date fields with `allowUnsure` store `<id>:unsure` /
   `<id>:note` in incidentDetails.
 - **In-form help**: floating "Need help?" on /report/* (per-step FAQ + a
-  stateless assistant). `worker/` = `sahayata-help` Cloudflare Worker calling
-  the Anthropic API (claude-opus-5, wrangler secret ANTHROPIC_API_KEY, NOT
-  deployed; see worker/README.md). `HELP_ENDPOINT` in
-  `src/services/helpService.ts` is null → clearly-labeled demo answers.
+  stateless assistant). `worker/` = `sahayata-help` Cloudflare Worker
+  (vaibhavpro9210 account, DEPLOYED at
+  sahayata-help.vaibhavpro9210.workers.dev): Groq
+  llama-3.3-70b-versatile when the GROQ_API_KEY secret is set (it is not
+  yet), else keyless Workers AI llama-3.3-70b-instruct-fp8-fast (the 3.1-8b
+  model is deprecated). `HELP_ENDPOINT` in `src/services/helpService.ts`
+  points at it; worker failure → clearly-labeled canned demo answers.
   The assistant never receives draft/complaint data by design.
+- **Look**: plain-government styling after police.gov.sg (white header, navy
+  #10508c actions/links, slim gray demo strip, no emojis anywhere in the UI).
 - `src/services/*` = the mock backend seam (auth, reports, geo, ocr, stt,
   device). `sttService` runs Whisper-tiny in-browser via
   `@huggingface/transformers` (lazy chunk, model downloads from HF hub on first
