@@ -189,7 +189,12 @@ export function Modal({
   );
 }
 
-/** GOV.UK-style error summary shown at the top of an invalid form. */
+/**
+ * GOV.UK-style error summary shown at the top of an invalid form. Each item
+ * is a link-style button that moves focus to the matching invalid control
+ * (fields flag themselves with aria-invalid, in the same order the page
+ * validates them).
+ */
 export function ErrorSummary({ errors }: { errors: string[] }) {
   const { t } = useI18n();
   const ref = useRef<HTMLDivElement>(null);
@@ -197,12 +202,29 @@ export function ErrorSummary({ errors }: { errors: string[] }) {
     if (errors.length) ref.current?.focus();
   }, [errors]);
   if (!errors.length) return null;
+
+  const focusInvalid = (i: number) => {
+    const nodes = document.querySelectorAll<HTMLElement>('[aria-invalid="true"]');
+    if (nodes.length === 0) return;
+    const target = nodes[Math.min(i, nodes.length - 1)];
+    target.focus();
+    target.scrollIntoView({ block: 'center' });
+  };
+
   return (
     <div ref={ref} tabIndex={-1} role="alert" className="border-4 border-error p-4 mb-6 max-w-2xl rounded-md">
       <h2 className="text-lg font-bold text-error mb-2">{t('errors.formHasErrors')}</h2>
-      <ul className="list-disc pl-5 text-error font-medium">
+      <ul className="list-disc pl-5">
         {errors.map((e, i) => (
-          <li key={i}>{e}</li>
+          <li key={i}>
+            <button
+              type="button"
+              onClick={() => focusInvalid(i)}
+              className="text-error font-medium underline underline-offset-2 text-left cursor-pointer"
+            >
+              {e}
+            </button>
+          </li>
         ))}
       </ul>
     </div>

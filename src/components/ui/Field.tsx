@@ -136,6 +136,7 @@ export function RadioGroup({
                 value={opt.value}
                 checked={checked}
                 onChange={() => onChange(opt.value)}
+                aria-invalid={error ? true : undefined}
                 className="mt-1 h-5 w-5 shrink-0 accent-[var(--tok-action)]"
               />
               <span>
@@ -177,6 +178,7 @@ export function Checkbox({
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
           aria-describedby={errId}
+          aria-invalid={error ? true : undefined}
           className="mt-1 h-6 w-6 shrink-0 accent-[var(--tok-action)]"
         />
         <span>

@@ -46,13 +46,16 @@ export default function PlatformPicker({
         </p>
       )}
       <div className="flex flex-wrap gap-2 mb-3">
-        {PLATFORM_IDS.map((id) => {
+        {PLATFORM_IDS.map((id, i) => {
           const on = isOn(id);
           return (
             <button
               key={id}
               type="button"
               aria-pressed={on}
+              // First chip carries the invalid flag so the error summary's
+              // focus jump lands here.
+              aria-invalid={error && i === 0 ? true : undefined}
               onClick={() => toggle(id)}
               className={`rounded-full border-2 hc-border px-4 py-2 min-h-[44px] font-medium cursor-pointer ${
                 on ? 'border-ink bg-ink text-page' : 'border-border bg-page hover:bg-surface'
