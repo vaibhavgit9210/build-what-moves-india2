@@ -12,7 +12,8 @@ import type { CategoryId } from '@/lib/types';
 
 export interface IncidentField {
   id: string;
-  type: 'text' | 'date' | 'datetime-local' | 'number' | 'select' | 'textarea' | 'url';
+  /** 'platforms' renders the multi-select platform picker (draft.platforms). */
+  type: 'text' | 'date' | 'datetime-local' | 'number' | 'select' | 'textarea' | 'url' | 'platforms';
   labelKey: string;
   hintKey?: string;
   optional?: boolean;
@@ -33,8 +34,7 @@ const YES_NO_PARTIALLY = [
 
 /** harassment and social-media-abuse share the same questions. */
 const HARASSMENT_FIELDS: IncidentField[] = [
-  { id: 'hr-platform', type: 'text', labelKey: 'media.fields.hrPlatform' },
-  { id: 'hr-profile', type: 'url', labelKey: 'media.fields.hrProfile', optional: true },
+  { id: 'hr-platform', type: 'platforms', labelKey: 'media.fields.hrPlatform' },
   { id: 'hr-since', type: 'date', labelKey: 'media.fields.hrSince', optional: true, allowUnsure: true },
   { id: 'hr-what', type: 'textarea', labelKey: 'media.fields.hrWhat' },
 ];
@@ -63,18 +63,15 @@ export const incidentFieldsByCategory: Record<CategoryId, IncidentField[]> = {
   ],
 
   'account-hacking': [
-    { id: 'ah-platform', type: 'text', labelKey: 'media.fields.ahPlatform', hintKey: 'media.fields.ahPlatformHint' },
+    { id: 'ah-platform', type: 'platforms', labelKey: 'media.fields.ahPlatform' },
     { id: 'ah-noticed', type: 'date', labelKey: 'media.fields.ahNoticed', allowUnsure: true },
     { id: 'ah-access', type: 'select', labelKey: 'media.fields.ahAccess', options: YES_NO_PARTIALLY },
     { id: 'ah-recovery', type: 'text', labelKey: 'media.fields.ahRecovery', optional: true },
     { id: 'ah-logins', type: 'textarea', labelKey: 'media.fields.ahLogins', optional: true },
-    { id: 'ah-url', type: 'url', labelKey: 'media.fields.ahUrl', optional: true },
   ],
 
   impersonation: [
-    { id: 'im-platform', type: 'text', labelKey: 'media.fields.imPlatform' },
-    { id: 'im-profile', type: 'url', labelKey: 'media.fields.imProfile' },
-    { id: 'im-username', type: 'text', labelKey: 'media.fields.imUsername' },
+    { id: 'im-platform', type: 'platforms', labelKey: 'media.fields.imPlatform' },
     { id: 'im-how', type: 'textarea', labelKey: 'media.fields.imHow' },
   ],
 
@@ -150,7 +147,7 @@ export const incidentFieldsByCategory: Record<CategoryId, IncidentField[]> = {
 
   /** Kept minimal and gentle: everything optional. */
   'sensitive-content': [
-    { id: 'sc-platform', type: 'text', labelKey: 'media.fields.scPlatform', optional: true },
+    { id: 'sc-platform', type: 'platforms', labelKey: 'media.fields.scPlatform', optional: true },
     { id: 'sc-when', type: 'date', labelKey: 'media.fields.scWhen', optional: true, allowUnsure: true },
     { id: 'sc-more', type: 'textarea', labelKey: 'media.fields.scMore', hintKey: 'media.fields.scMoreHint', optional: true },
   ],

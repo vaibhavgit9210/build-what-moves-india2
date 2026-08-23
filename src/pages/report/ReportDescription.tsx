@@ -11,10 +11,12 @@ import { useI18n } from '@/i18n';
 import { useDraft, mediaCache } from '@/state/DraftContext';
 import { nextPath, prevPath } from '@/lib/steps';
 import { transcribe, type SttProgress } from '@/services/sttService';
+import { ingestFiles } from '@/lib/evidence';
 import { Button } from '@/components/ui/Button';
 import { TextArea, Select } from '@/components/ui/Field';
 import { Alert, PageTitle, ProgressSteps, ErrorSummary } from '@/components/ui/Misc';
 import VoiceRecorder from '@/components/report/VoiceRecorder';
+import EvidenceDrop from '@/components/report/EvidenceDrop';
 import type { DescriptionInfo } from '@/lib/types';
 
 const THIS_PATH = '/report/description';
@@ -49,6 +51,7 @@ export default function ReportDescription() {
   const [progress, setProgress] = useState<SttProgress | null>(null);
 
   const [errors, setErrors] = useState<string[]>([]);
+  const [quickAddErrors, setQuickAddErrors] = useState<string[]>([]);
 
   const runTranscription = useCallback(
     async (blob: Blob, language: string, dur?: number) => {
@@ -72,6 +75,17 @@ export default function ReportDescription() {
   if (!draft) return <Navigate to="/report" replace />;
 
   const busy = progress !== null;
+
+  const addQuickFiles = (files: File[]) => {
+    const { metas, tooLarge } = ingestFiles(files);
+    if (metas.length > 0) updateDraft({ evidence: [...draft.evidence, ...metas] });
+    setQuickAddErrors(tooLarge.map((name) => t('media.evidence.tooLarge', { name })));
+  };
+
+  const removeQuickFile = (id: string) => {
+    mediaCache.files.delete(id);
+    updateDraft({ evidence: draft.evidence.filter((m) => m.id !== id) });
+  };
 
   const onContinue = () => {
     const text = (mode === 'typed' ? typedText : voiceText).trim();
@@ -251,6 +265,40 @@ export default function ReportDescription() {
           )}
         </>
       )}
+
+      <section className="mt-10 max-w-2xl">
+        <h2 className="text-xl font-bold mb-1">{t('media.description.evidenceHeading')}</h2>
+        <p className="text-muted mb-3">{t('media.description.evidenceHint')}</p>
+        {quickAddErrors.length > 0 && (
+          <Alert variant="error">
+            <ul className="list-disc pl-5">
+              {quickAddErrors.map((err, i) => (
+                <li key={i}>{err}</li>
+              ))}
+            </ul>
+          </Alert>
+        )}
+        <EvidenceDrop onFiles={addQuickFiles} />
+        {draft.evidence.length > 0 && (
+          <ul className="list-none p-0 m-0 flex flex-col gap-2">
+            {draft.evidence.map((item) => (
+              <li
+                key={item.id}
+                className="flex items-center justify-between gap-3 rounded-md border-2 border-border hc-border px-3 py-2"
+              >
+                <span className="font-medium break-all">{item.name}</span>
+                <Button
+                  variant="plain"
+                  onClick={() => removeQuickFile(item.id)}
+                  aria-label={`${t('common.remove')}: ${item.name}`}
+                >
+                  {t('common.remove')}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <div className="flex flex-wrap gap-3 mt-8">
         <Button variant="secondary" onClick={onBack}>

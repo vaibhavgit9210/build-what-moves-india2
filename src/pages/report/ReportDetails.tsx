@@ -15,6 +15,7 @@ import { incidentFieldsByCategory, type IncidentField } from '@/content/incident
 import { Button } from '@/components/ui/Button';
 import { TextInput, TextArea, Select, Checkbox } from '@/components/ui/Field';
 import { PageTitle, ProgressSteps, ErrorSummary } from '@/components/ui/Misc';
+import PlatformPicker from '@/components/report/PlatformPicker';
 import type { CategoryId } from '@/lib/types';
 
 const THIS_PATH = '/report/details';
@@ -60,7 +61,11 @@ export default function ReportDetails() {
   const validate = (): Record<string, string> => {
     const errs: Record<string, string> = {};
     const first = fields[0];
-    if (first && !first.optional) {
+    if (first && !first.optional && first.type === 'platforms') {
+      if ((draft?.platforms ?? []).length === 0) {
+        errs[first.id] = t('media.details.errorPlatforms');
+      }
+    } else if (first && !first.optional) {
       const unsure = first.allowUnsure && values[`${first.id}:unsure`] === 'yes';
       if (unsure) {
         if (!(values[`${first.id}:note`] ?? '').trim()) {
@@ -106,6 +111,10 @@ export default function ReportDetails() {
     const hint = f.hintKey ? t(f.hintKey) : undefined;
     const error = fieldErrors[f.id];
     const value = values[f.id] ?? '';
+
+    if (f.type === 'platforms') {
+      return <PlatformPicker key={f.id} legend={label} error={error} />;
+    }
 
     if (f.type === 'select') {
       return (

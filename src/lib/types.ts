@@ -86,6 +86,13 @@ export interface IdentityInfo {
   fileName?: string;
 }
 
+/** One entry of the multi-select "where did it happen" picker. */
+export interface PlatformEntry {
+  id: string;
+  /** Optional link or username on that platform. */
+  handle?: string;
+}
+
 export type EvidenceKind = 'screenshot' | 'chat' | 'document' | 'url' | 'video' | 'other';
 
 export interface EvidenceMeta {
@@ -139,6 +146,8 @@ export interface DraftReport {
   priority?: Priority;
   guidanceAcknowledged?: boolean;
   description?: DescriptionInfo;
+  /** Platforms where the incident occurred (categories with a platforms field). */
+  platforms?: PlatformEntry[];
   /** Answers to the category-specific incident form, keyed by field id. */
   incidentDetails: Record<string, string>;
   evidence: EvidenceMeta[];
@@ -184,6 +193,7 @@ export interface Report {
   identity?: IdentityInfo;
   answers: DecisionAnswers;
   description?: DescriptionInfo;
+  platforms?: PlatformEntry[];
   incidentDetails: Record<string, string>;
   evidence: EvidenceMeta[];
   extraNotes?: string;

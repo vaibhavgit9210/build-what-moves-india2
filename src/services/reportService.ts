@@ -54,6 +54,7 @@ export function submitReport(
     identity: draft.identity,
     answers: draft.answers,
     description: draft.description,
+    platforms: draft.platforms,
     incidentDetails: draft.incidentDetails,
     evidence: draft.evidence,
     extraNotes: draft.extraNotes,

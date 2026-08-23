@@ -212,6 +212,18 @@ export default function ReportReview() {
             label={t('dash.review.description')}
             value={draft.description?.text || notProvided}
           />
+          {draft.platforms && draft.platforms.length > 0 && (
+            <Row
+              label={t('dash.review.platforms')}
+              value={draft.platforms
+                .map((p) =>
+                  p.handle
+                    ? `${t(`media.platforms.${p.id}`)} (${p.handle})`
+                    : t(`media.platforms.${p.id}`),
+                )
+                .join(', ')}
+            />
+          )}
           {detailEntries.map(([fieldId, value]) => {
             // "<id>:unsure" is a UI flag; "<id>:note" is the "roughly when"
             // text shown under the base field's label.

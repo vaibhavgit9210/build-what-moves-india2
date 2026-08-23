@@ -11,13 +11,14 @@ import { useI18n } from '@/i18n';
 import { useDraft, mediaCache } from '@/state/DraftContext';
 import { nextPath, prevPath } from '@/lib/steps';
 import { uid } from '@/lib/id';
+import { ingestFiles } from '@/lib/evidence';
 import { Button } from '@/components/ui/Button';
 import { TextInput, TextArea } from '@/components/ui/Field';
 import { Alert, Card, PageTitle, ProgressSteps } from '@/components/ui/Misc';
+import EvidenceDrop from '@/components/report/EvidenceDrop';
 import type { EvidenceKind, EvidenceMeta } from '@/lib/types';
 
 const THIS_PATH = '/report/evidence';
-const MAX_FILE_BYTES = 25 * 1024 * 1024;
 
 const KIND_ICONS: Record<EvidenceKind, string> = {
   screenshot: '📷',
@@ -80,23 +81,16 @@ export default function ReportEvidence() {
     el.click();
   };
 
+  const addFiles = (files: File[], kind?: EvidenceKind) => {
+    const { metas, tooLarge } = ingestFiles(files, kind);
+    if (metas.length > 0) updateDraft({ evidence: [...evidence, ...metas] });
+    setAddErrors(tooLarge.map((name) => t('media.evidence.tooLarge', { name })));
+  };
+
   const onFilesChosen = (e: ChangeEvent<HTMLInputElement>) => {
     const list = e.target.files;
     if (!list || list.length === 0) return;
-    const kind = pendingKindRef.current;
-    const errs: string[] = [];
-    const metas: EvidenceMeta[] = [];
-    for (const file of Array.from(list)) {
-      if (file.size > MAX_FILE_BYTES) {
-        errs.push(t('media.evidence.tooLarge', { name: file.name }));
-        continue;
-      }
-      const id = uid();
-      mediaCache.files.set(id, file);
-      metas.push({ id, kind, name: file.name, size: file.size, mime: file.type });
-    }
-    if (metas.length > 0) updateDraft({ evidence: [...evidence, ...metas] });
-    setAddErrors(errs);
+    addFiles(Array.from(list), pendingKindRef.current);
     e.target.value = '';
   };
 
@@ -179,11 +173,13 @@ export default function ReportEvidence() {
       )}
 
       <h2 className="text-xl font-bold mb-3">{t('media.evidence.addHeading')}</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-2xl mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-2xl mb-4">
         {FILE_KINDS.slice(0, 3).map((fk) => addCard(fk.kind, () => openPicker(fk.kind, fk.accept)))}
         {addCard('url', () => setUrlFormOpen((o) => !o), urlFormOpen)}
         {FILE_KINDS.slice(3).map((fk) => addCard(fk.kind, () => openPicker(fk.kind, fk.accept)))}
       </div>
+
+      <EvidenceDrop onFiles={(files) => addFiles(files)} />
 
       <input
         ref={fileInputRef}
