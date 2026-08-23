@@ -56,6 +56,13 @@ export default {
     anonTitle: 'You reported anonymously',
     anonSaveRef: 'Because no account or contact details are attached, this report cannot be tracked and nobody will contact you about it. Save or download the reference number now; it is the only record you will have.',
     backHome: 'Back to home',
+    whatNextTitle: 'What happens next',
+    next1: 'Your report is registered under the reference number above.',
+    next2: 'It is reviewed and routed to the right cyber cell based on your location and category.',
+    next3Tracked: 'You can check its status any time from your dashboard, and you may be contacted if investigators need more detail.',
+    next3Anon: 'Because no contact details are attached, nobody will contact you and no status can be looked up later. This confirmation is your only record.',
+    next4Tracked: 'If you remember something important later, quote this reference number when your report is followed up.',
+    next4Anon: 'If you remember something important later, file a fresh report and mention this reference number. You can also quote it at your local police station or on the 1930 helpline.',
   },
   dashboard: {
     greeting: 'Hello, {name}',
@@ -87,6 +94,8 @@ export default {
   track: {
     title: 'Track a report',
     intro: 'Enter the reference number you received when the report was submitted.',
+    anonTitle: 'This reference belongs to an anonymous report',
+    anonBody: 'Anonymous reports carry no identity, so no status can be shown or shared for them. The report was received and is handled like any other; this reference number is your record of having filed it.',
     refLabel: 'Reference number',
     refHint: 'It looks like NCRP-DEMO-YYYYMMDD-NNNNN, for example NCRP-DEMO-20260822-48291.',
     refError: 'Enter your reference number.',

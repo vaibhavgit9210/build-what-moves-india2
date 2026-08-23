@@ -11,6 +11,7 @@ import { useI18n } from '@/i18n';
 import { useDraft, mediaCache } from '@/state/DraftContext';
 import { nextPath, prevPath } from '@/lib/steps';
 import { transcribe, type SttProgress } from '@/services/sttService';
+import { categoryById } from '@/content/categories';
 import { ingestFiles } from '@/lib/evidence';
 import { Button } from '@/components/ui/Button';
 import { TextArea, Select } from '@/components/ui/Field';
@@ -218,7 +219,18 @@ export default function ReportDescription() {
       <PageTitle>{t('media.description.title')}</PageTitle>
       <ErrorSummary errors={errors} />
 
-      <p className="text-lg mb-5 max-w-2xl">{t('media.description.intro')}</p>
+      <p className="text-lg mb-2 max-w-2xl">{t('media.description.intro')}</p>
+
+      {draft.category && categoryById(draft.category).sensitive && (
+        <Alert variant="info" title={t('tree.category.sensitiveTitle')}>
+          <p className="m-0">{t('media.description.sensitiveNote')}</p>
+        </Alert>
+      )}
+
+      <p className="text-sm text-muted mb-5 max-w-2xl">
+        {t('media.description.dataNote')}
+        {draft.mode === 'anonymous' && ` ${t('media.description.anonNote')}`}
+      </p>
 
       <fieldset className="border-0 p-0 mb-6">
         <legend className="text-base font-semibold mb-2">{t('media.description.modeLegend')}</legend>

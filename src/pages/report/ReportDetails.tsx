@@ -12,9 +12,10 @@ import { useI18n } from '@/i18n';
 import { useDraft } from '@/state/DraftContext';
 import { nextPath, prevPath } from '@/lib/steps';
 import { incidentFieldsByCategory, type IncidentField } from '@/content/incidentFields';
+import { categoryById } from '@/content/categories';
 import { Button } from '@/components/ui/Button';
 import { TextInput, TextArea, Select, Checkbox } from '@/components/ui/Field';
-import { PageTitle, ProgressSteps, ErrorSummary } from '@/components/ui/Misc';
+import { Alert, PageTitle, ProgressSteps, ErrorSummary } from '@/components/ui/Misc';
 import PlatformPicker from '@/components/report/PlatformPicker';
 import VoiceTextArea from '@/components/report/VoiceTextArea';
 import type { CategoryId } from '@/lib/types';
@@ -211,6 +212,12 @@ export default function ReportDetails() {
       <ErrorSummary errors={summary} />
 
       <p className="text-lg mb-6 max-w-2xl">{t('media.details.intro')}</p>
+
+      {categoryById(category).sensitive && (
+        <Alert variant="info" title={t('tree.category.sensitiveTitle')}>
+          <p className="m-0">{t('media.description.sensitiveNote')}</p>
+        </Alert>
+      )}
 
       <div className="max-w-2xl">{fields.map(renderField)}</div>
 

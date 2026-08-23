@@ -56,7 +56,13 @@ export default function Track() {
         </Button>
       </form>
 
-      {result.searched && report && category && (
+      {result.searched && report?.anonymous && (
+        <Alert variant="info" title={t('dash.track.anonTitle')}>
+          <p className="m-0">{t('dash.track.anonBody')}</p>
+        </Alert>
+      )}
+
+      {result.searched && report && !report.anonymous && category && (
         <section aria-labelledby="track-result" className="mb-8">
           <h2 id="track-result" className="text-2xl font-bold mb-3">
             {t('dash.track.resultTitle')}
