@@ -30,6 +30,10 @@ export interface User {
 
 export type CategoryId =
   | 'financial-fraud'
+  | 'investment-job-fraud'
+  | 'loan-app-abuse'
+  | 'romance-scam'
+  | 'sextortion'
   | 'account-hacking'
   | 'phishing'
   | 'harassment'
@@ -38,7 +42,9 @@ export type CategoryId =
   | 'ransomware'
   | 'crypto-fraud'
   | 'identity-theft'
+  | 'data-breach'
   | 'sensitive-content'
+  | 'child-safety'
   | 'other';
 
 /**
@@ -177,6 +183,30 @@ export interface TimelineEvent {
   note?: string;
 }
 
+/** The (synthetic) officer accountable for a report right now. */
+export interface CaseOfficer {
+  name: string;
+  /** i18n key for the rank/role, e.g. plan.roles.io */
+  rankKey: string;
+  unit: string;
+  /** Masked demo contact, e.g. "+91 98XXX XX210". */
+  phoneMasked: string;
+}
+
+/** One entry of the update log (mock SMS / email / portal messages). */
+export interface CaseUpdate {
+  at: string; // ISO
+  channel: 'sms' | 'email' | 'portal';
+  /** i18n key under plan.updates.*; {ref}, {officer}, {date} interpolated. */
+  textKey: string;
+}
+
+/** One escalation the reporter has raised. */
+export interface EscalationEvent {
+  level: number; // 1-5 (matrix level escalated TO)
+  at: string; // ISO
+}
+
 export interface Report {
   id: string;
   refNumber: string;
@@ -200,4 +230,12 @@ export interface Report {
   technical?: TechnicalInfo;
   /** Language the report was filed in. */
   lang: string;
+  /** Accountability layer (absent on reports from before the revamp). */
+  officer?: CaseOfficer;
+  /** When the next mandatory update is due; past due arms escalation. */
+  nextUpdateDue?: string; // ISO
+  updates?: CaseUpdate[];
+  /** Current escalation-matrix level (1 = investigating officer). */
+  escalationLevel?: number;
+  escalations?: EscalationEvent[];
 }

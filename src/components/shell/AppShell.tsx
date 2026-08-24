@@ -18,6 +18,7 @@ function Footer() {
     <footer className="mt-16 border-t-8 border-brand bg-surface">
       <div className="mx-auto max-w-5xl px-4 py-8">
         <nav aria-label={t('footer.help')} className="flex flex-wrap gap-x-6 gap-y-2 mb-4">
+          <Link to="/promise" className="text-ink font-semibold">{t('footer.promise')}</Link>
           <Link to="/help" className="text-ink">{t('footer.help')}</Link>
           <Link to="/safety" className="text-ink">{t('footer.safety')}</Link>
           <Link to="/privacy" className="text-ink">{t('footer.privacy')}</Link>

@@ -36,6 +36,26 @@ disappears; do not ask them to pick a branch there again.
 ## Shape
 
 - Vite base `/build-what-moves-india2/`, HashRouter (deep links work on Pages).
+- **Accountability revamp (Aug 2026)**: 17 legally-grounded categories
+  (6 new: investment-job-fraud, loan-app-abuse, romance-scam, sextortion,
+  data-breach, child-safety). `src/content/casePlans.ts` = CONTRACT FILE:
+  per-category statutes/owner/SLAs (ack, first contact, update cadence,
+  resolve-by) + specials/outcomes/guilty + the shared 5-level ESCALATION_MATRIX
+  (L5 = portal-drafted public social post via twitter intent, non-anonymous
+  only). Reports carry officer/nextUpdateDue/updates/escalationLevel
+  (reportService assigns a deterministic mock officer; escalateReport is
+  gated by entitledLevel: L2 unlocks the moment a deadline is missed, L3/4/5
+  at 7/14/21 days overdue, one level per click, each resets a 48h clock).
+  `CasePlanPanel` renders the 8-section clarity packet (statutes, staged
+  dates, officer, cadence, track, matrix, outcomes, punishments) on
+  success/detail pages + an AI rephrase via worker `/brief` (gpt-oss,
+  facts-grounded). ReportDetail has DEMO CONTROLS (simulate officer update /
+  missed deadline, the latter sets due 30 days back so all levels can be
+  walked). `/promise` = public service-promise page (lifecycle, matrix, SLA
+  table). refNumber is now a 14-digit numeric ack (real-NCRP shape). Demo
+  seed v2 replaces seeded reports r-1..r-8 with officered ones; **r-2 is
+  deliberately overdue** so `?e2e=login` demos land on an armed escalation.
+  i18n namespaces `plan` + `promise` (en+hi, keep parity).
 - **Two report modes** chosen on /report: `draft.mode = 'tracked' | 'anonymous'`.
   Anonymous skips the identity step everywhere (steps.ts helpers take an
   `anonymous` flag; stepper shows 4 steps; report gets `anonymous: true`, no
@@ -91,9 +111,9 @@ disappears; do not ask them to pick a branch there again.
   per-category incident form defs in `content/incidentFields.ts` (field ids are
   prefixed, e.g. `ff-amount`; labels resolve through `labelKey`, never
   humanize the id).
-- i18n: en + hi, 9 namespace files per locale under `src/i18n/locales/`
-  (incl. `helpPanel`, `chat`), flattened to dotted keys; `t()` falls back en → key.
-  Keep key trees in parity (965 keys each as of Aug 2026). **No em/en dashes in any copy** (user
+- i18n: en + hi, 11 namespace files per locale under `src/i18n/locales/`
+  (incl. `helpPanel`, `chat`, `plan`, `promise`), flattened to dotted keys; `t()` falls back en → key.
+  Keep key trees in parity (1223 keys each as of Aug 2026). **No em/en dashes in any copy** (user
   rule). Demo login `demo@example.com` / `Demo@123` (deliberately public).
 - Accessibility settings = data attributes on `<html>` + token swap in
   `global.css`. Note the Tailwind v4 trap that bit us once: element-level CSS

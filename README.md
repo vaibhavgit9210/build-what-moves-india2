@@ -47,6 +47,43 @@ category-specific incident form → evidence → review → submit → reference
 number → dashboard with a status timeline. No dead-end screens; every step has
 a manual fallback.
 
+## The accountability revamp
+
+The research on the real NCRP (2.4 percent of complaints become FIRs, "Under
+process" forever, disposed-without-reason, 1930 that does not connect) drove a
+structural redesign, not just a reskin:
+
+- **17 legally-grounded categories** replacing the terminology-first list:
+  every category names its statutes (IT Act 2000, Bharatiya Nyaya Sanhita
+  2023, POCSO 2012, BUDS Act 2019, DPDP Act 2023). New lanes: investment/job
+  scams, loan-app harassment, romance scams, sextortion, data breaches and a
+  dedicated child-safety emergency lane, so nothing falls between categories.
+- **Every case starts, moves and ends.** `src/content/casePlans.ts` gives each
+  category a service standard: officer assigned (1 to 24 h), first contact
+  (6 to 72 h), mandatory update cadence (3 to 15 days), resolve-or-close-with-
+  written-reason target (30 to 90 days). Eternal "Under process" is not a
+  state the system can be in.
+- **A named owner from minute one**: every report gets an investigating
+  officer (name, unit, masked phone) visible on the case, the success page and
+  public tracking.
+- **The escalation matrix**: a missed deadline arms a one-click escalation,
+  level by level: IO → Cyber Cell In-charge → District Nodal Officer → State
+  Nodal + I4C → public escalation, where the portal drafts a social post
+  tagging the accountable authorities (non-anonymous reports only; posting is
+  always the reporter's choice). Each level owes a response within 48 hours.
+- **The clarity packet**: after submitting (form or chat), the reporter sees
+  8 sections in plain bullets: what this problem is in law, what happens now
+  with dates, who is handling it, how updates arrive, how to track, how to
+  escalate, possible outcomes, and what the law provides on conviction. An
+  optional AI retelling (gpt-oss via the worker `/brief` route) may only
+  restate those facts.
+- **First aid stays first**: 1930 golden-hour guidance, 112 and Childline 1098
+  are kept at the top of guidance, the success page and `#/promise`.
+- **`#/promise`** publishes the whole contract: lifecycle, SLA table per
+  category, and the matrix. The report detail page ships demo controls
+  (simulate officer update / missed deadline) so the loop can be presented
+  end to end. Acknowledgement numbers are 14-digit, matching the real NCRP.
+
 ## Report by chat
 
 The "Report by chat" button in the header (top right, every page) opens a

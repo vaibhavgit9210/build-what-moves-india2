@@ -241,5 +241,97 @@ export default {
         body: 'Describe what happened in as much detail as you can. You can write in your own words, in English or Hindi.',
       },
     },
+    'investment-job-fraud': {
+      s1: {
+        title: 'Call 1930 if you paid recently',
+        body: 'If any payment was in the last few hours, call 1930 first. Fast reporting improves the chance of freezing the money in the receiving accounts.',
+      },
+      s2: {
+        title: 'Stop paying immediately',
+        body: 'Do not pay any "release fee", "tax" or "final task" to withdraw your money. Those demands are part of the scam.',
+      },
+      s3: {
+        title: 'Save the platform trail',
+        body: 'Keep the app or website link, the group chats, payment receipts and the accounts you paid to. Screenshots of your dashboard balance help too.',
+      },
+    },
+    'loan-app-abuse': {
+      s1: {
+        title: 'Do not pay under threat',
+        body: 'Extortion is a crime even if you took a loan. Note what they demand and keep the threat messages.',
+      },
+      s2: {
+        title: 'Warn your contacts',
+        body: 'If the app accessed your contacts, tell people close to you that fake or morphed messages may reach them and to ignore them.',
+      },
+      s3: {
+        title: 'Record the app details',
+        body: 'Keep the app name, where you installed it from, the recovery agents\' numbers, and screenshots of threats.',
+      },
+    },
+    'romance-scam': {
+      s1: {
+        title: 'Stop all transfers and contact',
+        body: 'Send nothing more, whatever the story. Do not announce that you are reporting; just stop responding.',
+      },
+      s2: {
+        title: 'Call 1930 for recent payments',
+        body: 'If you sent money in the last few hours, call 1930 now so the freeze request reaches the banks fastest.',
+      },
+      s3: {
+        title: 'Keep the whole conversation',
+        body: 'Save the profile, chats, photos they used and every payment receipt. Do not feel embarrassed; this is an organised crime that targets thousands.',
+      },
+    },
+    sextortion: {
+      s1: {
+        title: 'Do not pay, and do not delete',
+        body: 'Payment never stops the threats; it marks you as someone who pays. Keep the chats and their profile as evidence.',
+      },
+      s2: {
+        title: 'Cut contact, do not negotiate',
+        body: 'Block on the platform after saving evidence. Do not stay on calls or chats to plead; every response is leverage to them.',
+      },
+      s3: {
+        title: 'You are the victim here',
+        body: 'This is a crime committed against you, not something you caused. Cases like this are handled sensitively and your privacy is protected.',
+      },
+      s4: {
+        title: 'If content is posted, takedown is fast',
+        body: 'Platforms must remove intimate content quickly once flagged through this report. Save the link if anything appears; do not share it onward.',
+      },
+    },
+    'data-breach': {
+      s1: {
+        title: 'Change passwords that may be exposed',
+        body: 'Start with your email and banking. Turn on two-step verification wherever available.',
+      },
+      s2: {
+        title: 'Watch for follow-on fraud',
+        body: 'Leaked data is used for phishing and SIM swap attempts. Treat unexpected OTPs, calls or KYC messages as hostile.',
+      },
+      s3: {
+        title: 'Record where you saw the leak',
+        body: 'Keep the link, screenshot or message that showed your data exposed, and note which organisation you believe held it.',
+      },
+    },
+    'child-safety': {
+      s1: {
+        title: 'If the child is in danger now, call 1098 or 112',
+        body: 'Childline 1098 responds to children in need of urgent help. For immediate physical danger, call 112.',
+      },
+      s2: {
+        title: 'Do not confront, forward or repost',
+        body: 'Do not send the content to anyone, including to "prove" it. Possession and forwarding are offences; the link or account name is enough for action.',
+      },
+      s3: {
+        title: 'Reassure the child',
+        body: 'If the child is with you, keep them safe and calm and away from the account involved. They are not in trouble; the offender is.',
+      },
+      s4: {
+        title: 'This report moves on the emergency lane',
+        body: 'A trained child welfare officer handles it, the takedown clock is 24 hours, and you get updates every 3 days until it ends.',
+      },
+    },
   },
 };

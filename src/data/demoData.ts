@@ -6,7 +6,8 @@ import { loadJSON, saveJSON, KEYS } from '@/lib/storage';
 import { hashPassword } from '@/services/authService';
 import type { Report, User } from '@/lib/types';
 
-const SEED_VERSION = 1;
+// v2: reports carry the accountability layer (officer, deadlines, updates).
+const SEED_VERSION = 2;
 
 const T = (daysAgo: number, h = 14, m = 34) => {
   const d = new Date();
@@ -56,9 +57,11 @@ export async function seedDemoData(): Promise<void> {
     const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
     const seq = ['submitted', 'received', 'under-review', 'assigned', 'investigation', 'resolved'] as const;
     const upto = seq.indexOf(status);
+    const officers = ['SI Meera Nair', 'SI Arjun Patil', 'ASI Kavita Reddy', 'SI Harpreet Gill'];
+    const resolved = status === 'resolved';
     return {
       id,
-      refNumber: `NCRP-DEMO-${ymd}-${String(20000 + refDay * 137).slice(0, 5)}`,
+      refNumber: `${ymd}${String(20000000 + refDay * 137137).slice(0, 8)}`,
       userId,
       category,
       priority: category === 'financial-fraud' || category === 'crypto-fraud' ? 'immediate' : 'standard',
@@ -69,6 +72,21 @@ export async function seedDemoData(): Promise<void> {
       incidentDetails: {},
       evidence: [],
       lang,
+      officer: {
+        name: officers[refDay % officers.length],
+        rankKey: 'plan.roles.io',
+        unit: 'District Cyber Cell',
+        phoneMasked: `+91 98XXX XX${String(200 + refDay * 7).slice(0, 3)}`,
+      },
+      // r-2 (6 days old, still only "received") is deliberately overdue so
+      // the demo login lands on an armed escalation right away.
+      ...(resolved ? {} : { nextUpdateDue: id === 'r-2' ? T(2) : T(-7) }),
+      updates: [
+        { at: submittedAt, channel: 'sms', textKey: 'plan.updates.registered' },
+        { at: T(refDay, 16, 10), channel: 'email', textKey: 'plan.updates.assigned' },
+      ],
+      escalationLevel: 1,
+      escalations: [],
       ...extra,
     };
   };
@@ -112,12 +130,14 @@ export async function seedDemoData(): Promise<void> {
       'Abusive comments and morphed images are being posted about me in a public group.'),
   ];
 
-  // Merge without clobbering anything the user has already created.
+  // Merge without clobbering anything the user has created themselves.
+  // Seeded reports (known ids) ARE replaced, so a seed-version bump can
+  // upgrade their shape (e.g. adding the accountability layer).
   const existingUsers = loadJSON<User[]>(KEYS.users, []);
   const existingReports = loadJSON<Report[]>(KEYS.reports, []);
   const userIds = new Set(existingUsers.map((u) => u.id));
-  const reportIds = new Set(existingReports.map((r) => r.id));
+  const seededIds = new Set(reports.map((r) => r.id));
   saveJSON(KEYS.users, [...existingUsers, ...users.filter((u) => !userIds.has(u.id))]);
-  saveJSON(KEYS.reports, [...existingReports, ...reports.filter((r) => !reportIds.has(r.id))]);
+  saveJSON(KEYS.reports, [...existingReports.filter((r) => !seededIds.has(r.id)), ...reports]);
   saveJSON(KEYS.seedVersion, SEED_VERSION);
 }

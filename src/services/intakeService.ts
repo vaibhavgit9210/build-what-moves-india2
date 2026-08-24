@@ -31,6 +31,27 @@ export const OPENAI_MODEL = 'gpt-4o-mini';
 export const OSS_MODEL = 'gpt-oss-120b';
 export const INTAKE_ENDPOINT: string | null =
   'https://sahayata-help.vaibhavpro9210.workers.dev/intake';
+export const BRIEF_ENDPOINT: string | null =
+  'https://sahayata-help.vaibhavpro9210.workers.dev/brief';
+
+/**
+ * Grounded rephrase of the case plan: the model may ONLY restate the facts
+ * given (enforced by the worker's instruction), so the friendly version can
+ * never promise anything the static plan does not. Throws on failure; the
+ * caller keeps showing the static bullets.
+ */
+export async function aiBrief(facts: string, lang: string): Promise<string> {
+  if (!BRIEF_ENDPOINT) throw new Error('no endpoint');
+  const res = await fetch(BRIEF_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ facts: facts.slice(0, 6000), lang }),
+  });
+  if (!res.ok) throw new Error(`brief ${res.status}`);
+  const data = (await res.json()) as { raw?: string };
+  if (!data.raw) throw new Error('brief empty');
+  return data.raw.trim();
+}
 
 export interface ChatMsg {
   role: 'assistant' | 'user';
@@ -111,9 +132,15 @@ export function nextSlot(x: Extraction): Slot {
 /* ------------------------------------------------------------------ */
 
 const CATEGORY_KEYWORDS: { id: CategoryId; words: RegExp }[] = [
-  { id: 'sensitive-content', words: /private (photo|video|picture)|nude|morph|intimate|viral (photo|video)|निजी (फोटो|तस्वीर|वीडियो)|अश्लील/i },
+  { id: 'child-safety', words: /child.{0,24}(sexual|abuse|nude|porn|photo|video|groom)|csam|underage|minor.{0,24}(photo|video|sexual|abuse)|नाबालिग|मेरे बच्चे/i },
+  { id: 'sextortion', words: /sextort|video call.{0,32}(nude|naked|record|blackmail)|(nude|naked|private).{0,32}(blackmail|extort|money)|blackmail.{0,24}(video|photo|nude)|न्यूड.{0,16}ब्लैकमेल/i },
+  { id: 'loan-app-abuse', words: /loan app|instant loan|recovery agent|loan.{0,24}(threat|harass|abus)|लोन (ऐप|एप)/i },
+  { id: 'sensitive-content', words: /private (photo|video|picture)|nude|obscene|morph|intimate|viral (photo|video)|निजी (फोटो|तस्वीर|वीडियो)|अश्लील/i },
   { id: 'ransomware', words: /ransom|files?[^.\n]{0,24}(locked|encrypted)|decrypt|फिरौती/i },
+  { id: 'investment-job-fraud', words: /invest|trading|stock (tip|market).{0,16}(scam|fraud|loss)|telegram task|part.?time (job|task)|task.{0,16}(deposit|prepaid)|ponzi|work from home.{0,24}(deposit|fee)|निवेश|टास्क/i },
+  { id: 'romance-scam', words: /matrimon|romance|dating (app|site)|shaadi|jeevansathi|tinder|bumble|(online )?(girlfriend|boyfriend|partner).{0,32}(money|gift|scam)|शादी.{0,12}धोखा/i },
   { id: 'crypto-fraud', words: /crypto|bitcoin|btc|usdt|binance|ethereum|क्रिप्टो|बिटकॉइन/i },
+  { id: 'data-breach', words: /data (leak|breach|sold)|(details|information|database).{0,16}(leaked|sold|exposed)|privacy breach|डेटा लीक/i },
   { id: 'identity-theft', words: /aadhaar|pan card|sim (card|swap)|identity (theft|stolen)|documents? misused|आधार|पैन/i },
   { id: 'account-hacking', words: /hack|password (changed|stolen)|locked out|can'?t log ?in|account (taken|stolen|compromised)|हैक|पासवर्ड/i },
   { id: 'impersonation', words: /fake (profile|account)|impersonat|pretending to be|someone is using my (name|photo)|नकली (प्रोफ|खात)/i },
@@ -155,6 +182,32 @@ export function parseAmount(text: string): string | null {
     if (Number.isFinite(n) && n > 0) return String(n);
   }
   return null;
+}
+
+/**
+ * Greetings and filler ("hi", "hello", "ok thanks") must never be stored as
+ * data: not in the description, and never as a city or field value. This is
+ * the guard against the "City: hi" class of bug.
+ */
+const GREETING_RE = /^(hi+|hii+|hey+|hello+|helo|yo|ok+|okay|thanks?|thank you|hmm+|test|namaste|namaskar|हाय|हैलो|हेलो|नमस्ते|नमस्कार|धन्यवाद|ठीक है?)[\s!.,]*$/i;
+
+export function isGreetingOnly(text: string): boolean {
+  return GREETING_RE.test(text.trim());
+}
+
+/** Drop greeting-only lines, e.g. the "hi" above the actual story. */
+export function stripGreetings(text: string): string {
+  return text
+    .split('\n')
+    .filter((line) => line.trim() && !isGreetingOnly(line))
+    .join('\n')
+    .trim();
+}
+
+/** A plausible place name: letters, at least 3 chars, not a greeting. */
+export function isPlausiblePlace(text: string): boolean {
+  const v = text.trim();
+  return v.length >= 3 && /\p{L}{3,}/u.test(v) && !/\d{3,}/.test(v) && !isGreetingOnly(v);
 }
 
 /** UPI handle = user@suffix where the suffix has no dot (not an email). */
@@ -245,6 +298,10 @@ function detectPlatforms(text: string): PlatformEntry[] {
  */
 const POOL_TARGETS: Partial<Record<CategoryId, { amount?: string; upi?: string; phone?: string; txn?: string; when?: string; contact?: string }>> = {
   'financial-fraud': { amount: 'ff-amount', upi: 'ff-upi', phone: 'ff-phone', txn: 'ff-txn', when: 'ff-when' },
+  'investment-job-fraud': { amount: 'if-amount', when: 'if-when', upi: 'if-payee' },
+  'loan-app-abuse': { amount: 'la-amount' },
+  'romance-scam': { amount: 'rs-amount', when: 'rs-since' },
+  sextortion: { amount: 'sx-demand', when: 'sx-when' },
   'crypto-fraud': { amount: 'cf-amount', txn: 'cf-txn' },
   phishing: { contact: 'ph-sender' },
   'account-hacking': { when: 'ah-noticed' },
@@ -330,9 +387,13 @@ export function applyAnswer(x: Extraction, slot: Slot, text: string, quickValue?
 
   switch (slot.kind) {
     case 'story':
-    case 'story-more':
-      out.description = out.description ? `${out.description}\n${text}` : text;
+    case 'story-more': {
+      // A bare greeting is not a story; leave the slot open so the
+      // assistant asks again instead of storing "hi" as the description.
+      const story = stripGreetings(text);
+      if (story) out.description = out.description ? `${out.description}\n${story}` : story;
       break;
+    }
 
     case 'confirm-category': {
       const yes = quickValue === 'yes' || (!quickValue && SELECT_WORDS.yes.test(text.trim()));
@@ -368,7 +429,8 @@ export function applyAnswer(x: Extraction, slot: Slot, text: string, quickValue?
     case 'field': {
       const f = slot.field;
       const value = quickValue ?? text.trim();
-      if (!value) break;
+      // Greetings and filler never become field answers.
+      if (!value || (!quickValue && isGreetingOnly(value))) break;
       if (f.type === 'select') {
         const opt = f.options?.find((o) => o.value === value)
           ?? f.options?.find((o) => SELECT_WORDS[o.value]?.test(value));
@@ -391,11 +453,13 @@ export function applyAnswer(x: Extraction, slot: Slot, text: string, quickValue?
     }
 
     case 'city': {
-      if (quickValue === 'skip' || /^skip$/i.test(text.trim())) { out.citySkipped = true; break; }
+      if (quickValue === 'skip' || /^(skip|छोड़ें|छोड़ो)$/i.test(text.trim())) { out.citySkipped = true; break; }
       const parts = text.split(/[,，]/).map((s) => s.trim()).filter(Boolean);
-      if (parts.length > 0) {
+      // Only accept a plausible place name; greetings and junk leave the
+      // slot open so the question is asked again.
+      if (parts.length > 0 && isPlausiblePlace(parts[0])) {
         out.city = parts[0];
-        if (parts[1]) out.state = parts[1];
+        if (parts[1] && isPlausiblePlace(parts[1])) out.state = parts[1];
       }
       break;
     }
@@ -444,7 +508,7 @@ Return ONLY a JSON object with these keys:
 "category": one of ${CATEGORIES.map((c) => c.id).join(', ')} or null if unclear.
 "sentiment": one of distressed, anxious, angry, calm.
 "urgent": true if money moved or harm happened within roughly the last day.
-"fields": object mapping field ids (below, for the chosen category only) to string values the user actually stated. Dates as YYYY-MM-DD or YYYY-MM-DDTHH:mm. Amounts as plain rupee numbers. Never invent values.
+"fields": object mapping field ids (below, for the chosen category only) to string values the user actually stated. Dates as YYYY-MM-DD or YYYY-MM-DDTHH:mm. Amounts as plain rupee numbers. Never invent values; every value must come from the user's own words. Greetings like "hi" or "hello" are NOT data: never output them as any field, city or state. Omit anything the user has not clearly stated.
 "platforms": array of {"id": one of ${PLATFORM_IDS.join(', ')}, "handle": optional string} the user mentioned. Only ONLINE platforms; a phone call or an in-person event is not a platform.
 "city": city name or null. "state": Indian state or null.
 Field ids per category:
@@ -469,7 +533,12 @@ function parseModelJson(raw: string): ModelPatch {
   return JSON.parse(stripped.slice(start, end + 1)) as ModelPatch;
 }
 
-/** Merge a model patch into the extraction; never overwrite existing values. */
+/**
+ * Merge a model patch into the extraction. Anti-hallucination gate: never
+ * overwrite existing values, drop anything that fails type sanity (numeric
+ * fields must be numbers, selects must be valid options, places must be
+ * plausible place names), and never accept greetings as data.
+ */
 function mergePatch(x: Extraction, patch: ModelPatch): Extraction {
   const out: Extraction = { ...x, details: { ...x.details }, platforms: [...x.platforms] };
   if (!out.category && patch.category && CATEGORIES.some((c) => c.id === patch.category)) {
@@ -479,11 +548,18 @@ function mergePatch(x: Extraction, patch: ModelPatch): Extraction {
     if (out.sentiment === 'calm') out.sentiment = patch.sentiment as Sentiment;
   }
   if (patch.urgent) out.urgent = true;
-  const valid = new Set(
-    Object.values(incidentFieldsByCategory).flat().map((f) => f.id),
+  const fieldDefs = new Map(
+    Object.values(incidentFieldsByCategory).flat().map((f) => [f.id, f] as const),
   );
   for (const [id, value] of Object.entries(patch.fields ?? {})) {
-    if (valid.has(id) && typeof value === 'string' && value && !out.details[id]) out.details[id] = value;
+    const f = fieldDefs.get(id);
+    if (!f || typeof value !== 'string' || !value.trim() || out.details[id]) continue;
+    const v = value.trim();
+    if (isGreetingOnly(v)) continue;
+    if (f.type === 'number' && !/^\d+(\.\d+)?$/.test(v.replace(/,/g, ''))) continue;
+    if (f.type === 'select' && !f.options?.some((o) => o.value === v)) continue;
+    if ((f.type === 'date' || f.type === 'datetime-local') && !/^\d{4}-\d{2}-\d{2}/.test(v)) continue;
+    out.details[id] = f.type === 'number' ? v.replace(/,/g, '') : v;
   }
   for (const p of patch.platforms ?? []) {
     if (p.id && PLATFORM_IDS.includes(p.id as (typeof PLATFORM_IDS)[number])
@@ -491,8 +567,8 @@ function mergePatch(x: Extraction, patch: ModelPatch): Extraction {
       out.platforms.push({ id: p.id, ...(p.handle ? { handle: p.handle } : {}) });
     }
   }
-  if (!out.city && patch.city) out.city = patch.city;
-  if (!out.state && patch.state) out.state = patch.state;
+  if (!out.city && patch.city && isPlausiblePlace(patch.city)) out.city = patch.city.trim();
+  if (!out.state && patch.state && isPlausiblePlace(patch.state)) out.state = patch.state.trim();
   return out;
 }
 

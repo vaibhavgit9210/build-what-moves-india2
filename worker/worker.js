@@ -152,11 +152,41 @@ async function handleIntake(request, env) {
   }
 }
 
+/**
+ * POST /brief {facts, lang} -> {raw, provider}
+ * Rephrases the case-plan facts in warm plain language. Hard-grounded: the
+ * model is told to use ONLY the given facts, add nothing, promise nothing.
+ */
+async function handleBrief(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'bad-request' }, 400);
+  }
+  const facts = typeof body?.facts === 'string' ? body.facts.trim() : '';
+  if (!facts || facts.length > 6000) return json({ error: 'bad-request' }, 400);
+  const lang = body?.lang === 'hi' ? 'Hindi' : 'English';
+  const instructions =
+    `You explain a cybercrime report's case plan to the person who just filed it. Rewrite the FACTS below as short, warm, plain-${lang} bullet points (8 bullets max). ` +
+    `Use ONLY the facts given. Do not add, estimate, or promise anything that is not in the facts. Do not use emojis, headings, or em dashes. Answer in ${lang}.`;
+  if (!env.AI) return json({ error: 'not-configured' }, 503);
+  for (const model of ['@cf/openai/gpt-oss-120b', '@cf/openai/gpt-oss-20b']) {
+    try {
+      return json({ raw: await runGptOss(env, model, instructions, `FACTS:\n${facts}`), provider: model });
+    } catch {
+      // Try the next model.
+    }
+  }
+  return json({ error: 'upstream' }, 502);
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     const url = new URL(request.url);
     if (request.method === 'POST' && url.pathname === '/intake') return handleIntake(request, env);
+    if (request.method === 'POST' && url.pathname === '/brief') return handleBrief(request, env);
     if (request.method !== 'POST' || url.pathname !== '/ask') return json({ error: 'not-found' }, 404);
 
     let body;

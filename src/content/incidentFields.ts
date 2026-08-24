@@ -129,6 +129,82 @@ export const incidentFieldsByCategory: Record<CategoryId, IncidentField[]> = {
     { id: 'cf-txn', type: 'text', labelKey: 'media.fields.cfTxn', optional: true },
   ],
 
+  'investment-job-fraud': [
+    { id: 'if-platform', type: 'text', labelKey: 'media.fields.ifPlatform' },
+    { id: 'if-amount', type: 'number', labelKey: 'media.fields.ifAmount' },
+    { id: 'if-when', type: 'date', labelKey: 'media.fields.ifWhen', optional: true, allowUnsure: true },
+    { id: 'if-promised', type: 'textarea', labelKey: 'media.fields.ifPromised', optional: true },
+    { id: 'if-payee', type: 'text', labelKey: 'media.fields.ifPayee', optional: true },
+  ],
+
+  'loan-app-abuse': [
+    { id: 'la-app', type: 'text', labelKey: 'media.fields.laApp' },
+    { id: 'la-abuse', type: 'textarea', labelKey: 'media.fields.laAbuse' },
+    { id: 'la-amount', type: 'number', labelKey: 'media.fields.laAmount', optional: true },
+    {
+      id: 'la-contacts',
+      type: 'select',
+      labelKey: 'media.fields.laContacts',
+      optional: true,
+      options: [
+        { value: 'yes', labelKey: 'common.yes' },
+        { value: 'no', labelKey: 'common.no' },
+        { value: 'not-sure', labelKey: 'common.notSure' },
+      ],
+    },
+  ],
+
+  'romance-scam': [
+    { id: 'rs-platform', type: 'platforms', labelKey: 'media.fields.rsPlatform' },
+    { id: 'rs-amount', type: 'number', labelKey: 'media.fields.rsAmount', optional: true },
+    { id: 'rs-since', type: 'date', labelKey: 'media.fields.rsSince', optional: true, allowUnsure: true },
+    { id: 'rs-story', type: 'textarea', labelKey: 'media.fields.rsStory', optional: true },
+  ],
+
+  /** Gentle: only the channel is required; everything else optional. */
+  sextortion: [
+    { id: 'sx-channel', type: 'platforms', labelKey: 'media.fields.sxChannel' },
+    { id: 'sx-when', type: 'date', labelKey: 'media.fields.sxWhen', optional: true, allowUnsure: true },
+    { id: 'sx-demand', type: 'number', labelKey: 'media.fields.sxDemand', optional: true },
+    { id: 'sx-paid', type: 'select', labelKey: 'media.fields.sxPaid', optional: true, options: YES_NO_PARTIALLY },
+    { id: 'sx-threat', type: 'textarea', labelKey: 'media.fields.sxThreat', optional: true },
+  ],
+
+  'data-breach': [
+    {
+      id: 'db-what',
+      type: 'select',
+      labelKey: 'media.fields.dbWhat',
+      options: [
+        { value: 'documents', labelKey: 'media.opts.docs' },
+        { value: 'photos', labelKey: 'media.opts.photos' },
+        { value: 'phone-number', labelKey: 'media.opts.phoneNumber' },
+        { value: 'bank-details', labelKey: 'media.opts.bankDetails' },
+        { value: 'other', labelKey: 'media.opts.other' },
+      ],
+    },
+    { id: 'db-where', type: 'textarea', labelKey: 'media.fields.dbWhere' },
+    { id: 'db-org', type: 'text', labelKey: 'media.fields.dbOrg', optional: true },
+  ],
+
+  /** Kept minimal and gentle: everything optional, same as sensitive-content. */
+  'child-safety': [
+    {
+      id: 'cs-relation',
+      type: 'select',
+      labelKey: 'media.fields.csRelation',
+      optional: true,
+      options: [
+        { value: 'my-child', labelKey: 'media.opts.myChild' },
+        { value: 'another-child', labelKey: 'media.opts.anotherChild' },
+        { value: 'self-minor', labelKey: 'media.opts.selfMinor' },
+        { value: 'other', labelKey: 'media.opts.other' },
+      ],
+    },
+    { id: 'cs-platform', type: 'platforms', labelKey: 'media.fields.csPlatform', optional: true },
+    { id: 'cs-what', type: 'textarea', labelKey: 'media.fields.csWhat', hintKey: 'media.fields.csWhatHint', optional: true },
+  ],
+
   'identity-theft': [
     {
       id: 'it-what',

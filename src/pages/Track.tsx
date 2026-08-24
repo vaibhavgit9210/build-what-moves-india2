@@ -81,10 +81,29 @@ export default function Track() {
                 <dt className="sm:w-44 shrink-0 text-muted">{t('dash.track.submitted')}</dt>
                 <dd className="m-0 font-medium">{formatDate(report.submittedAt, lang, true)}</dd>
               </div>
-              <div className="flex flex-col sm:flex-row sm:gap-4 py-2">
+              <div className="flex flex-col sm:flex-row sm:gap-4 py-2 border-b border-border">
                 <dt className="sm:w-44 shrink-0 text-muted">{t('dash.track.currentStatus')}</dt>
                 <dd className="m-0 font-medium">{t(`status.${report.status}`)}</dd>
               </div>
+              {report.officer && (
+                <div className="flex flex-col sm:flex-row sm:gap-4 py-2 border-b border-border">
+                  <dt className="sm:w-44 shrink-0 text-muted">{t('plan.account.handler')}</dt>
+                  <dd className="m-0 font-medium">
+                    {report.officer.name}, {report.officer.unit}
+                  </dd>
+                </div>
+              )}
+              {report.nextUpdateDue && (
+                <div className="flex flex-col sm:flex-row sm:gap-4 py-2">
+                  <dt className="sm:w-44 shrink-0 text-muted">{t('plan.account.nextDueShort')}</dt>
+                  <dd
+                    className={`m-0 font-medium ${new Date(report.nextUpdateDue) < new Date() ? 'text-error' : ''}`}
+                  >
+                    {formatDate(report.nextUpdateDue, lang, true)}
+                    {new Date(report.nextUpdateDue) < new Date() && ` (${t('plan.account.overdueShort')})`}
+                  </dd>
+                </div>
+              )}
             </dl>
             <StatusTimeline timeline={report.timeline} status={report.status} />
             <p className="text-sm text-muted mt-4 mb-0">{t('dash.track.privacyNote')}</p>

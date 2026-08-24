@@ -1,10 +1,18 @@
 /**
  * Demo report store. Reports live in localStorage; nothing is ever sent
  * to NCRP or any real system.
+ *
+ * The accountability layer is simulated here: every report gets a named
+ * officer, a next-update deadline from its category's case plan, a mock
+ * SMS/email update log, and an escalation state the reporter can raise
+ * through the matrix (level 5 = public social escalation, non-anonymous
+ * only). Demo controls let a presenter simulate an officer update or a
+ * missed deadline.
  */
 import { loadJSON, saveJSON, KEYS } from '@/lib/storage';
 import { makeRefNumber, uid } from '@/lib/id';
-import type { DraftReport, Report, TechnicalInfo, User } from '@/lib/types';
+import { casePlanFor, ESCALATION_MATRIX, entitledLevel } from '@/content/casePlans';
+import type { CaseOfficer, CaseUpdate, DraftReport, Report, TechnicalInfo, User } from '@/lib/types';
 
 export function getAllReports(): Report[] {
   return loadJSON<Report[]>(KEYS.reports, []);
@@ -30,6 +38,33 @@ export function trackReport(refNumber: string): Report | null {
   return getAllReports().find((r) => r.refNumber.toUpperCase() === ref) ?? null;
 }
 
+/** Synthetic officer pool; deterministic pick keeps demos reproducible. */
+const OFFICER_POOL: { name: string; rankKey: string }[] = [
+  { name: 'SI Meera Nair', rankKey: 'plan.roles.io' },
+  { name: 'SI Arjun Patil', rankKey: 'plan.roles.io' },
+  { name: 'ASI Kavita Reddy', rankKey: 'plan.roles.io' },
+  { name: 'SI Harpreet Gill', rankKey: 'plan.roles.io' },
+  { name: 'ASI Devendra Kumar', rankKey: 'plan.roles.io' },
+];
+
+function assignOfficer(report: Pick<Report, 'refNumber' | 'category' | 'location'>): CaseOfficer {
+  const seed = [...report.refNumber].reduce((a, c) => a + c.charCodeAt(0), 0);
+  const base = OFFICER_POOL[seed % OFFICER_POOL.length];
+  const city = report.location?.address.city;
+  return {
+    ...base,
+    unit: city ? `${city} District Cyber Cell` : 'District Cyber Cell',
+    phoneMasked: `+91 98XXX XX${String(200 + (seed % 700)).padStart(3, '0')}`,
+  };
+}
+
+function hoursFrom(iso: string, hours: number): string {
+  return new Date(new Date(iso).getTime() + hours * 3600_000).toISOString();
+}
+function daysFrom(iso: string, days: number): string {
+  return new Date(new Date(iso).getTime() + days * 86400_000).toISOString();
+}
+
 export function submitReport(
   draft: DraftReport,
   user: User | null,
@@ -38,17 +73,28 @@ export function submitReport(
 ): Report {
   const now = new Date();
   const received = new Date(now.getTime() + 60_000);
+  const category = draft.category ?? 'other';
+  const plan = casePlanFor(category);
+  const refNumber = makeRefNumber(now);
+  const officer = assignOfficer({ refNumber, category, location: draft.location });
+  const financial = ['financial-fraud', 'investment-job-fraud', 'crypto-fraud', 'romance-scam'].includes(category);
+  const updates: CaseUpdate[] = [
+    { at: now.toISOString(), channel: 'sms', textKey: 'plan.updates.registered' },
+    ...(financial ? [{ at: received.toISOString(), channel: 'sms' as const, textKey: 'plan.updates.freezeStarted' }] : []),
+    { at: hoursFrom(now.toISOString(), plan.ackHours), channel: 'email', textKey: 'plan.updates.assigned' },
+  ];
   const report: Report = {
     id: uid(),
-    refNumber: makeRefNumber(now),
+    refNumber,
     ...(user ? { userId: user.id } : { anonymous: true }),
-    category: draft.category ?? 'other',
+    category,
     priority: draft.priority ?? 'standard',
     submittedAt: now.toISOString(),
     status: 'received',
     timeline: [
       { status: 'submitted', at: now.toISOString() },
       { status: 'received', at: received.toISOString() },
+      { status: 'assigned', at: hoursFrom(now.toISOString(), plan.ackHours) },
     ],
     location: draft.location,
     identity: draft.identity,
@@ -60,7 +106,94 @@ export function submitReport(
     extraNotes: draft.extraNotes,
     technical,
     lang,
+    officer,
+    // First mandatory contact from the officer is the first deadline.
+    nextUpdateDue: hoursFrom(now.toISOString(), plan.firstContactHours),
+    updates,
+    escalationLevel: 1,
+    escalations: [],
   };
   saveAllReports([...getAllReports(), report]);
   return report;
+}
+
+function patchReport(id: string, patch: Partial<Report>): Report | null {
+  const all = getAllReports();
+  const i = all.findIndex((r) => r.id === id || r.refNumber === id);
+  if (i < 0) return null;
+  const next = { ...all[i], ...patch };
+  all[i] = next;
+  saveAllReports(all);
+  return next;
+}
+
+/**
+ * Raise the case one level up the escalation matrix (only when the current
+ * deadline is actually missed). Resets the update clock: the new owner owes
+ * the reporter a response within 48 hours.
+ */
+export function escalateReport(id: string): Report | null {
+  const report = getAllReports().find((r) => r.id === id || r.refNumber === id);
+  if (!report) return null;
+  const current = report.escalationLevel ?? 1;
+  const target = entitledLevel(report);
+  if (target <= current) return report;
+  const level = Math.min(current + 1, ESCALATION_MATRIX.length);
+  const now = new Date().toISOString();
+  return patchReport(id, {
+    escalationLevel: level,
+    escalations: [...(report.escalations ?? []), { level, at: now }],
+    nextUpdateDue: hoursFrom(now, 48),
+    updates: [
+      ...(report.updates ?? []),
+      { at: now, channel: 'portal', textKey: `plan.updates.escalated${level}` },
+    ],
+    timeline: [...report.timeline, { status: report.status, at: now, note: `escalated-l${level}` }],
+  });
+}
+
+/** DEMO control: pretend the officer posted a progress update on time. */
+export function simulateOfficerUpdate(id: string): Report | null {
+  const report = getAllReports().find((r) => r.id === id || r.refNumber === id);
+  if (!report) return null;
+  const plan = casePlanFor(report.category);
+  const now = new Date().toISOString();
+  const progressed = report.status === 'received' || report.status === 'submitted'
+    ? 'under-review'
+    : report.status === 'under-review'
+      ? 'assigned'
+      : 'investigation';
+  return patchReport(id, {
+    status: progressed,
+    nextUpdateDue: daysFrom(now, plan.updateEveryDays),
+    updates: [...(report.updates ?? []), { at: now, channel: 'sms', textKey: 'plan.updates.progress' }],
+    timeline: [...report.timeline, { status: progressed, at: now }],
+  });
+}
+
+/** DEMO control: pretend the deadline was missed long ago, so every level of
+ * the matrix can be walked one step at a time during a presentation. */
+export function simulateMissedDeadline(id: string): Report | null {
+  return patchReport(id, { nextUpdateDue: daysFrom(new Date().toISOString(), -30) });
+}
+
+/**
+ * Level-5 public escalation: a ready-to-post social message tagging the
+ * accountable authorities, plus a share intent URL. Drafted only; the
+ * reporter decides whether to post it.
+ */
+export function socialPostDraft(report: Report): { text: string; intentUrl: string } {
+  const state = report.location?.address.state;
+  const stateTag = state ? `@${state.replace(/\s+/g, '')}Police` : '@DGPOffice';
+  const days = Math.max(
+    1,
+    Math.round((Date.now() - new Date(report.submittedAt).getTime()) / 86400000),
+  );
+  const text =
+    `Cybercrime complaint ${report.refNumber} has had no mandated update for ${days}+ days despite the published service promise. ` +
+    `Requesting immediate review. @Cyberdost @IndianCERT ${stateTag} #CyberSahayata (demo)`;
+  return {
+    text,
+    intentUrl: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
+  };
 }

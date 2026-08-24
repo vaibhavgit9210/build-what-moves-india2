@@ -7,5 +7,7 @@ import media from './media';
 import dash from './dash';
 import helpPanel from './helpPanel';
 import chat from './chat';
+import plan from './plan';
+import promise from './promise';
 
-export default { ...common, publicPages, auth, flow, tree, media, dash, helpPanel, chat };
+export default { ...common, publicPages, auth, flow, tree, media, dash, helpPanel, chat, plan, promise };

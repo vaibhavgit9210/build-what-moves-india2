@@ -31,6 +31,10 @@ function steps(cat: string, count: number, tels: Record<number, string> = {}): G
 
 export const guidanceByCategory: Record<CategoryId, GuidanceStep[]> = {
   'financial-fraud': steps('financial-fraud', 4, { 1: '1930' }),
+  'investment-job-fraud': steps('investment-job-fraud', 3, { 1: '1930' }),
+  'loan-app-abuse': steps('loan-app-abuse', 3),
+  'romance-scam': steps('romance-scam', 3, { 2: '1930' }),
+  sextortion: steps('sextortion', 4),
   'account-hacking': steps('account-hacking', 4),
   phishing: steps('phishing', 4),
   harassment: steps('harassment', 4),
@@ -39,6 +43,8 @@ export const guidanceByCategory: Record<CategoryId, GuidanceStep[]> = {
   ransomware: steps('ransomware', 4),
   'crypto-fraud': steps('crypto-fraud', 3, { 3: '1930' }),
   'identity-theft': steps('identity-theft', 3),
+  'data-breach': steps('data-breach', 3),
   'sensitive-content': steps('sensitive-content', 4, { 1: '1098' }),
+  'child-safety': steps('child-safety', 4, { 1: '1098' }),
   other: steps('other', 3),
 };

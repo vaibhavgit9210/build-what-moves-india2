@@ -7,6 +7,7 @@ import { getReport, listReports } from '@/services/reportService';
 import { categoryById } from '@/content/categories';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Alert, PageTitle } from '@/components/ui/Misc';
+import CasePlanPanel from '@/components/report/CasePlanPanel';
 
 export default function ReportSuccess() {
   const { t, lang } = useI18n();
@@ -87,13 +88,7 @@ export default function ReportSuccess() {
         </Alert>
       )}
 
-      <h2 className="text-xl font-bold mb-2">{t('dash.success.whatNextTitle')}</h2>
-      <ol className="list-decimal pl-6 mb-8 space-y-2">
-        <li>{t('dash.success.next1')}</li>
-        <li>{t('dash.success.next2')}</li>
-        <li>{t(anonymous ? 'dash.success.next3Anon' : 'dash.success.next3Tracked')}</li>
-        <li>{t(anonymous ? 'dash.success.next4Anon' : 'dash.success.next4Tracked')}</li>
-      </ol>
+      <CasePlanPanel report={report} />
 
       <h2 className="text-xl font-bold mb-2">{t('dash.success.summaryTitle')}</h2>
       <p className="text-sm text-muted mb-3">{t('dash.success.saveRefHint')}</p>

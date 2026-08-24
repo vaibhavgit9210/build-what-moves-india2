@@ -11,6 +11,7 @@ import { useDraft } from '@/state/DraftContext';
 
 const Landing = lazy(() => import('@/pages/Landing'));
 const ChatReport = lazy(() => import('@/pages/ChatReport'));
+const ServicePromise = lazy(() => import('@/pages/Promise'));
 const Help = lazy(() => import('@/pages/Help'));
 const SafetyTips = lazy(() => import('@/pages/SafetyTips'));
 const Privacy = lazy(() => import('@/pages/Privacy'));
@@ -77,6 +78,7 @@ export const router = createHashRouter([
     children: [
       { path: '/', element: wrap(<Landing />) },
       { path: '/chat', element: wrap(<ChatReport />) },
+      { path: '/promise', element: wrap(<ServicePromise />) },
       { path: '/help', element: wrap(<Help />) },
       { path: '/safety', element: wrap(<SafetyTips />) },
       { path: '/privacy', element: wrap(<Privacy />) },
