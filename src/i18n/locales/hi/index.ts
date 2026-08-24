@@ -6,5 +6,6 @@ import tree from './tree';
 import media from './media';
 import dash from './dash';
 import helpPanel from './helpPanel';
+import chat from './chat';
 
-export default { ...common, publicPages, auth, flow, tree, media, dash, helpPanel };
+export default { ...common, publicPages, auth, flow, tree, media, dash, helpPanel, chat };

@@ -51,4 +51,6 @@ export const KEYS = {
   lang: 'language',
   seedVersion: 'seedVersion',
   sessionId: 'sessionId',
+  chat: 'chatIntake',
+  openaiKey: 'openaiKey',
 } as const;

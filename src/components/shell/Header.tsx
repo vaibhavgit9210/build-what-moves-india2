@@ -103,8 +103,24 @@ export function Header() {
         { to: '/safety', label: t('nav.safety') },
       ];
 
+  // Top-right entry into the chat-based reporting journey.
+  const chatButton = (
+    <Link
+      to="/chat"
+      className="inline-flex items-center gap-1.5 bg-action text-actiontext text-sm font-semibold rounded-sm px-3 py-1.5 no-underline hover:bg-actionhover shrink-0"
+    >
+      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z" />
+        <path d="M8 12h.01M12 12h.01M16 12h.01" />
+      </svg>
+      <span className="hidden sm:inline">{t('nav.chatReport')}</span>
+      <span className="sm:hidden">{t('nav.chatReportShort')}</span>
+    </Link>
+  );
+
   const utilities = (
     <div className="flex items-center gap-2 flex-wrap">
+      {chatButton}
       <label className="flex items-center gap-1.5 text-ink text-sm">
         <span className="sr-only">{t('nav.language')}</span>
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -188,14 +204,17 @@ export function Header() {
 
           <div className="hidden md:block">{utilities}</div>
 
-          <button
-            className="md:hidden text-ink border border-border rounded-sm px-3 py-2 font-semibold cursor-pointer"
-            aria-expanded={menuOpen}
-            aria-controls="mobile-nav"
-            onClick={() => setMenuOpen((v) => !v)}
-          >
-            {menuOpen ? t('nav.closeMenu') : t('nav.menu')}
-          </button>
+          <div className="md:hidden flex items-center gap-2">
+            {chatButton}
+            <button
+              className="text-ink border border-border rounded-sm px-3 py-2 font-semibold cursor-pointer"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-nav"
+              onClick={() => setMenuOpen((v) => !v)}
+            >
+              {menuOpen ? t('nav.closeMenu') : t('nav.menu')}
+            </button>
+          </div>
         </div>
 
         <nav aria-label={t('nav.primaryNav')} className="hidden md:flex gap-1 pb-1">

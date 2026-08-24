@@ -25,6 +25,8 @@ export default {
     language: 'Language',
     accessibility: 'Accessibility',
     dashboard: 'Dashboard',
+    chatReport: 'Report by chat',
+    chatReportShort: 'Chat',
   },
   common: {
     continue: 'Continue',

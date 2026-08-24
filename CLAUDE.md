@@ -48,6 +48,20 @@ disappears; do not ask them to pick a branch there again.
   -platform handle) used by harassment/social-media/impersonation/hacking/
   sensitive categories. Date fields with `allowUnsure` store `<id>:unsure` /
   `<id>:note` in incidentDetails.
+- **Report by chat** (`#/chat`, top-right header button on every page):
+  conversational intake that fills the form. Anonymous/signed-in gate mirrors
+  /report modes. `src/services/intakeService.ts` = extraction engine: the
+  deterministic slot policy (`nextSlot`) always chooses the next question;
+  extraction runs per user message via OpenAI `gpt-4o-mini` (user-pasted key
+  in localStorage `ncrpdemo.openaiKey`, sent only to api.openai.com, falls
+  back per-turn with a visible notice) or the built-in demo parser (amount/
+  UPI/phone/txn/date-phrase regexes + category/sentiment keyword lexicons,
+  en+hi). Relative dates for datetime fields go through the `<id>:unsure`/
+  `<id>:note` mechanism, never invented timestamps. "Review and submit"
+  morphs chat → pre-filled editable form (CSS stagger, reduced-motion safe)
+  submitting via the same reportService; "Open in the full form" hands the
+  built draft to /report/review. Conversation persists in `ncrpdemo.chatIntake`.
+  i18n namespace `chat` (en+hi, keep parity).
 - **In-form help**: floating "Need help?" on /report/* (per-step FAQ + a
   stateless assistant). `worker/` = `sahayata-help` Cloudflare Worker
   (vaibhavpro9210 account, DEPLOYED at
@@ -71,9 +85,9 @@ disappears; do not ask them to pick a branch there again.
   per-category incident form defs in `content/incidentFields.ts` (field ids are
   prefixed, e.g. `ff-amount`; labels resolve through `labelKey`, never
   humanize the id).
-- i18n: en + hi, 8 namespace files per locale under `src/i18n/locales/`
-  (incl. `helpPanel`), flattened to dotted keys; `t()` falls back en → key.
-  Keep key trees in parity (~880 keys each as of Aug 2026). **No em/en dashes in any copy** (user
+- i18n: en + hi, 9 namespace files per locale under `src/i18n/locales/`
+  (incl. `helpPanel`, `chat`), flattened to dotted keys; `t()` falls back en → key.
+  Keep key trees in parity (965 keys each as of Aug 2026). **No em/en dashes in any copy** (user
   rule). Demo login `demo@example.com` / `Demo@123` (deliberately public).
 - Accessibility settings = data attributes on `<html>` + token swap in
   `global.css`. Note the Tailwind v4 trap that bit us once: element-level CSS
@@ -85,7 +99,9 @@ disappears; do not ask them to pick a branch there again.
 `?e2e=draft` sign in + seed a full financial-fraud draft (works for every
 /report/* step incl. review) · `?e2e=anon` same draft as an ANONYMOUS
 journey (no login, no identity, location method 'map' so the Leaflet map
-opens pre-pinned) · `?lang=hi` Hindi. Example:
+opens pre-pinned) · `?e2e=chat` seed a finished chat-intake conversation on
+`#/chat` ("Review and submit" visible) · `?e2e=chatform` same but already
+morphed into the pre-filled form · `?lang=hi` Hindi. Example:
 `…/build-what-moves-india2/?e2e=draft#/report/review`.
 Headless Chrome: pages are rAF-free; use `--virtual-time-budget=8000
 --timeout=20000` and a fresh `--user-data-dir` per run (Chrome sometimes hangs

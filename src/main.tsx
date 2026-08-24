@@ -17,6 +17,9 @@ async function boot() {
   //   ?e2e=draft  — sign in AND seed a filled-in in-progress draft report
   //   ?e2e=anon   — seed the same draft as an ANONYMOUS journey (no login,
   //                 no identity step)
+  //   ?e2e=chat     — seed a finished chat-intake conversation on #/chat
+  //                   ("Review and submit" visible)
+  //   ?e2e=chatform — same, already morphed into the pre-filled form
   const params = new URLSearchParams(window.location.search);
   const e2e = params.get('e2e');
   if (e2e === 'reset') clearAll();
@@ -65,6 +68,46 @@ async function boot() {
         { id: 'ev-2', kind: 'url', name: 'Suspicious link', url: 'https://example.com/fake-bank' },
       ],
       extraNotes: 'The caller knew my name and the last 4 digits of my card.',
+    });
+  }
+
+  if (e2e === 'chat' || e2e === 'chatform') {
+    saveJSON(KEYS.chat, {
+      mode: 'anonymous',
+      phase: e2e === 'chatform' ? 'form' : 'chat',
+      messages: [
+        { role: 'assistant', text: 'Tell me what happened, in your own words. Include anything you remember, like amounts, phone numbers, links or dates.' },
+        { role: 'user', text: 'Yesterday evening someone called saying my bank account would be blocked unless I shared an OTP. I was worried and shared it, and 20,000 rupees went out through UPI to fraudpay@okbank.' },
+        { role: 'assistant', text: 'You are doing the right thing by reporting this. Noted Amount lost: 20000; Payment method: UPI. From what you describe, this looks like Financial fraud (UPI, bank, OTP, cards). Did I get that right?' },
+        { role: 'user', text: 'Yes' },
+        { role: 'assistant', text: 'Next detail: Bank or wallet involved' },
+        { role: 'user', text: 'Demo Bank of India' },
+        { role: 'assistant', text: 'Noted Bank or wallet involved: Demo Bank of India. Which city and state should this report be routed to? For example "Bengaluru, Karnataka". You can also tap Skip.' },
+        { role: 'user', text: 'Bengaluru, Karnataka' },
+        { role: 'assistant', text: 'Do you have any proof, like screenshots, messages or receipts? You can attach files on the evidence page before submitting.' },
+        { role: 'user', text: 'No' },
+        { role: 'assistant', text: 'Thank you, I have what I need. Press "Review and submit" to check the filled form. Nothing is sent until you confirm it.' },
+      ],
+      extraction: {
+        category: 'financial-fraud',
+        categoryConfirmed: true,
+        sentiment: 'anxious',
+        urgent: true,
+        description:
+          'Yesterday evening someone called saying my bank account would be blocked unless I shared an OTP. I was worried and shared it, and 20,000 rupees went out through UPI to fraudpay@okbank.',
+        details: {
+          'ff-when:unsure': 'yes',
+          'ff-when:note': 'yesterday evening',
+          'ff-amount': '20000',
+          'ff-bank': 'Demo Bank of India',
+          'ff-method': 'upi',
+          'ff-upi': 'fraudpay@okbank',
+        },
+        platforms: [],
+        city: 'Bengaluru',
+        state: 'Karnataka',
+        hasEvidence: 'no',
+      },
     });
   }
 

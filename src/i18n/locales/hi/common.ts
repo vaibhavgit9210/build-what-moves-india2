@@ -25,6 +25,8 @@ export default {
     language: 'भाषा',
     accessibility: 'सुगम्यता',
     dashboard: 'डैशबोर्ड',
+    chatReport: 'चैट से रिपोर्ट करें',
+    chatReportShort: 'चैट',
   },
   common: {
     continue: 'जारी रखें',

@@ -47,6 +47,34 @@ category-specific incident form → evidence → review → submit → reference
 number → dashboard with a status timeline. No dead-end screens; every step has
 a manual fallback.
 
+## Report by chat
+
+The "Report by chat" button in the header (top right, every page) opens a
+conversational alternative to the form journey at `#/chat`. The user chooses
+anonymous or signed-in filing, then tells their story in free text; the intake
+engine extracts the category, sentiment, urgency and the real incident-form
+fields from each message and asks only for what is still missing (quick-reply
+chips for yes/no, categories, platforms and select options). A live "What we
+understood" panel fills in beside the conversation. When everything required
+is present, "Review and submit" morphs the chat into a pre-filled, editable
+form (staggered transition, honours reduced motion) that submits through the
+same `reportService` as the classic journey; "Open in the full form" hands the
+same data to the regular review page instead.
+
+Understanding providers, honestly labeled in the UI:
+
+- **OpenAI (`gpt-4o-mini`)** when the user saves an API key under "AI
+  settings" on the chat page. The key stays in localStorage and is sent only
+  to `api.openai.com`; on any failure the turn falls back to the demo parser
+  with a visible notice.
+- **Built-in demo parser** otherwise (`src/services/intakeService.ts`):
+  deterministic rules for amounts (`₹20,000`, `2 lakh`, `20k`), UPI handles,
+  phone numbers, transaction ids, platforms, relative dates ("yesterday
+  evening" is stored through the form's honest "roughly when" mechanism, never
+  as an invented timestamp), category keywords and a sentiment/urgency
+  lexicon, in English and Hindi. Money moved recently surfaces a "call 1930
+  now" banner.
+
 ## Architecture
 
 ```
@@ -106,6 +134,9 @@ CSS).
 
 Append query params **before** the hash: `?e2e=login` signs in the demo
 account, `?e2e=reset` wipes all demo storage, `?lang=hi` starts in Hindi.
+`?e2e=chat` seeds a finished chat-intake conversation on `#/chat` (the
+"Review and submit" state); `?e2e=chatform` seeds the same conversation
+already morphed into the pre-filled form.
 Example: `…/build-what-moves-india2/?e2e=login#/dashboard`.
 
 ## Replacing mocks with real APIs later
