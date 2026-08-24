@@ -16,17 +16,18 @@ export default {
   },
 
   provider: {
-    liveBadge: 'Live understanding: OpenAI {model}',
+    liveBadge: 'Live understanding: OpenAI {model} (your key)',
+    ossBadge: 'Live understanding: OpenAI {model}, free, no key needed',
     demoBadge: 'Demo understanding: built-in parser, no AI connected',
     settings: 'AI settings',
     keyLabel: 'OpenAI API key',
     keyHint:
-      'Optional. The key is stored in this browser only and sent only to api.openai.com. Without a key the built-in demo parser reads your messages.',
+      'Optional. The key is stored in this browser only and sent only to api.openai.com. Without a key, OpenAI’s open-weight gpt-oss model answers for free through this prototype’s server.',
     save: 'Save key',
     remove: 'Remove key',
     turnFellBack: 'The AI service did not respond, so the built-in parser read this message instead.',
     privacyNote:
-      'This is a prototype. With a key, your messages go to OpenAI for understanding; without one they never leave this browser. Do not include real personal details.',
+      'This is a prototype. Your chat messages are sent to an AI service for understanding: OpenAI directly if you saved a key, otherwise a free OpenAI open-weight model on this prototype’s server. Nothing is stored there. Do not include real personal details.',
   },
 
   chatRegion: 'Conversation with the assistant',

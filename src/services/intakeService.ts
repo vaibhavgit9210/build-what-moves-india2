@@ -7,10 +7,13 @@
  * deterministic slot policy in nextSlot(), so the conversation is identical
  * and testable whichever brain extracted the answers.
  *
- * Two extraction providers:
+ * Three extraction providers, in order:
  *  - 'openai': OpenAI Chat Completions (gpt-4o-mini, JSON mode) with a key
  *    the user pastes on the chat page. The key lives in this browser's
  *    localStorage only and is sent only to api.openai.com.
+ *  - 'gpt-oss': OpenAI's open-weight gpt-oss-120b running keyless and free on
+ *    Cloudflare Workers AI, via the sahayata-help worker's /intake route.
+ *    This is the default: no key, no cost, works for every visitor.
  *  - 'demo':   a built-in rule parser (amounts, UPI ids, phones, platforms,
  *    date phrases, category and sentiment keywords) so the prototype works
  *    fully offline. Clearly labeled in the UI.
@@ -25,6 +28,9 @@ export type Sentiment = 'distressed' | 'anxious' | 'angry' | 'calm';
 export type IntakeProvider = 'openai' | 'demo';
 
 export const OPENAI_MODEL = 'gpt-4o-mini';
+export const OSS_MODEL = 'gpt-oss-120b';
+export const INTAKE_ENDPOINT: string | null =
+  'https://sahayata-help.vaibhavpro9210.workers.dev/intake';
 
 export interface ChatMsg {
   role: 'assistant' | 'user';
@@ -432,18 +438,19 @@ function fieldCatalog(): string {
   return lines.join('\n');
 }
 
-const OPENAI_SYSTEM = () => `You extract structured cybercrime-report data from a victim's chat messages (English or Hindi).
+/** Shared extraction spec, used by both OpenAI-direct and the worker. */
+const EXTRACTION_SPEC = () => `You extract structured cybercrime-report data from a victim's chat messages (English or Hindi).
 Return ONLY a JSON object with these keys:
 "category": one of ${CATEGORIES.map((c) => c.id).join(', ')} or null if unclear.
 "sentiment": one of distressed, anxious, angry, calm.
 "urgent": true if money moved or harm happened within roughly the last day.
 "fields": object mapping field ids (below, for the chosen category only) to string values the user actually stated. Dates as YYYY-MM-DD or YYYY-MM-DDTHH:mm. Amounts as plain rupee numbers. Never invent values.
-"platforms": array of {"id": one of ${PLATFORM_IDS.join(', ')}, "handle": optional string} the user mentioned.
+"platforms": array of {"id": one of ${PLATFORM_IDS.join(', ')}, "handle": optional string} the user mentioned. Only ONLINE platforms; a phone call or an in-person event is not a platform.
 "city": city name or null. "state": Indian state or null.
 Field ids per category:
 ${fieldCatalog()}`;
 
-interface OpenAiPatch {
+interface ModelPatch {
   category?: string | null;
   sentiment?: string;
   urgent?: boolean;
@@ -453,31 +460,17 @@ interface OpenAiPatch {
   state?: string | null;
 }
 
-/**
- * One extraction turn via OpenAI. Merges what the model found into the
- * extraction; never overwrites a value that is already set. Throws on any
- * network/API failure so the caller can fall back to the demo parser.
- */
-export async function openaiExtract(key: string, messages: ChatMsg[], x: Extraction): Promise<Extraction> {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-    body: JSON.stringify({
-      model: OPENAI_MODEL,
-      temperature: 0,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: OPENAI_SYSTEM() },
-        ...messages.map((m) => ({ role: m.role, content: m.text })),
-      ],
-    }),
-  });
-  if (!res.ok) throw new Error(`openai ${res.status}`);
-  const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-  const raw = data.choices?.[0]?.message?.content;
-  if (!raw) throw new Error('openai empty');
-  const patch = JSON.parse(raw) as OpenAiPatch;
+/** Parse model output that may arrive fenced or with stray prose around it. */
+function parseModelJson(raw: string): ModelPatch {
+  const stripped = raw.replace(/```(?:json)?/gi, '').trim();
+  const start = stripped.indexOf('{');
+  const end = stripped.lastIndexOf('}');
+  if (start < 0 || end <= start) throw new Error('no json');
+  return JSON.parse(stripped.slice(start, end + 1)) as ModelPatch;
+}
 
+/** Merge a model patch into the extraction; never overwrite existing values. */
+function mergePatch(x: Extraction, patch: ModelPatch): Extraction {
   const out: Extraction = { ...x, details: { ...x.details }, platforms: [...x.platforms] };
   if (!out.category && patch.category && CATEGORIES.some((c) => c.id === patch.category)) {
     out.category = patch.category as CategoryId;
@@ -501,4 +494,51 @@ export async function openaiExtract(key: string, messages: ChatMsg[], x: Extract
   if (!out.city && patch.city) out.city = patch.city;
   if (!out.state && patch.state) out.state = patch.state;
   return out;
+}
+
+/**
+ * One extraction turn via OpenAI-direct (user-pasted key). Throws on any
+ * network/API failure so the caller can fall back.
+ */
+export async function openaiExtract(key: string, messages: ChatMsg[], x: Extraction): Promise<Extraction> {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      temperature: 0,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: EXTRACTION_SPEC() },
+        ...messages.map((m) => ({ role: m.role, content: m.text })),
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`openai ${res.status}`);
+  const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+  const raw = data.choices?.[0]?.message?.content;
+  if (!raw) throw new Error('openai empty');
+  return mergePatch(x, parseModelJson(raw));
+}
+
+/**
+ * One extraction turn via the sahayata-help worker, which runs OpenAI's
+ * open-weight gpt-oss-120b on keyless Workers AI: free, no key, the default
+ * for every visitor. Throws on failure so the caller can fall back to the
+ * built-in parser.
+ */
+export async function workerExtract(messages: ChatMsg[], x: Extraction): Promise<Extraction> {
+  if (!INTAKE_ENDPOINT) throw new Error('no endpoint');
+  const res = await fetch(INTAKE_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      spec: EXTRACTION_SPEC(),
+      messages: messages.slice(-12).map((m) => ({ role: m.role, content: m.text.slice(0, 1500) })),
+    }),
+  });
+  if (!res.ok) throw new Error(`intake ${res.status}`);
+  const data = (await res.json()) as { raw?: string };
+  if (!data.raw) throw new Error('intake empty');
+  return mergePatch(x, parseModelJson(data.raw));
 }

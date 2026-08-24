@@ -65,9 +65,14 @@ Understanding providers, honestly labeled in the UI:
 
 - **OpenAI (`gpt-4o-mini`)** when the user saves an API key under "AI
   settings" on the chat page. The key stays in localStorage and is sent only
-  to `api.openai.com`; on any failure the turn falls back to the demo parser
-  with a visible notice.
-- **Built-in demo parser** otherwise (`src/services/intakeService.ts`):
+  to `api.openai.com`.
+- **OpenAI `gpt-oss-120b`, free, the default**: without a key, each free-text
+  message goes to the `sahayata-help` worker's `/intake` route, which runs
+  OpenAI's open-weight gpt-oss-120b on Cloudflare's keyless Workers AI
+  binding (no key, no cost, works for every visitor). The worker returns the
+  model's raw JSON; the client validates and merges it.
+- **Built-in demo parser** as the last fallback, with a visible per-turn
+  notice when a model call fails (`src/services/intakeService.ts`):
   deterministic rules for amounts (`₹20,000`, `2 lakh`, `20k`), UPI handles,
   phone numbers, transaction ids, platforms, relative dates ("yesterday
   evening" is stored through the form's honest "roughly when" mechanism, never

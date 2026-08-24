@@ -52,11 +52,15 @@ disappears; do not ask them to pick a branch there again.
   conversational intake that fills the form. Anonymous/signed-in gate mirrors
   /report modes. `src/services/intakeService.ts` = extraction engine: the
   deterministic slot policy (`nextSlot`) always chooses the next question;
-  extraction runs per user message via OpenAI `gpt-4o-mini` (user-pasted key
-  in localStorage `ncrpdemo.openaiKey`, sent only to api.openai.com, falls
-  back per-turn with a visible notice) or the built-in demo parser (amount/
-  UPI/phone/txn/date-phrase regexes + category/sentiment keyword lexicons,
-  en+hi). Relative dates for datetime fields go through the `<id>:unsure`/
+  extraction runs per free-text user message via OpenAI `gpt-4o-mini`
+  (user-pasted key in localStorage `ncrpdemo.openaiKey`, sent only to
+  api.openai.com) or, DEFAULT with no key, OpenAI's open-weight
+  **gpt-oss-120b free on keyless Workers AI** through the sahayata-help
+  worker's `/intake` route (client sends the extraction spec + last 12
+  messages; worker returns raw model JSON; falls back gpt-oss-20b → llama).
+  Model failure falls back per-turn, with a visible notice, to the built-in
+  demo parser (amount/UPI/phone/txn/date-phrase regexes + category/sentiment
+  keyword lexicons, en+hi). Relative dates for datetime fields go through the `<id>:unsure`/
   `<id>:note` mechanism, never invented timestamps. "Review and submit"
   morphs chat → pre-filled editable form (CSS stagger, reduced-motion safe)
   submitting via the same reportService; "Open in the full form" hands the
@@ -65,12 +69,14 @@ disappears; do not ask them to pick a branch there again.
 - **In-form help**: floating "Need help?" on /report/* (per-step FAQ + a
   stateless assistant). `worker/` = `sahayata-help` Cloudflare Worker
   (vaibhavpro9210 account, DEPLOYED at
-  sahayata-help.vaibhavpro9210.workers.dev): Groq
+  sahayata-help.vaibhavpro9210.workers.dev): `/ask` = Groq
   llama-3.3-70b-versatile when the GROQ_API_KEY secret is set (it is not
   yet), else keyless Workers AI llama-3.3-70b-instruct-fp8-fast (the 3.1-8b
   model is deprecated). `HELP_ENDPOINT` in `src/services/helpService.ts`
   points at it; worker failure → clearly-labeled canned demo answers.
-  The assistant never receives draft/complaint data by design.
+  The /ask assistant never receives draft/complaint data by design; the
+  worker's `/intake` route (chat-report extraction) DOES receive the chat
+  messages, uses them for one model call and stores nothing.
 - **Look**: plain-government styling after police.gov.sg (white header, navy
   #10508c actions/links, slim gray demo strip, no emojis anywhere in the UI).
 - `src/services/*` = the mock backend seam (auth, reports, geo, ocr, stt,

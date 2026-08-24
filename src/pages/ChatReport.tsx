@@ -27,7 +27,10 @@ import {
   setOpenAiKey,
   nextSlot,
   openaiExtract,
+  workerExtract,
   OPENAI_MODEL,
+  OSS_MODEL,
+  INTAKE_ENDPOINT,
   type ChatMsg,
   type Extraction,
   type Slot,
@@ -170,11 +173,15 @@ export default function ChatReport() {
     setBusy(true);
     setFellBack(false);
 
+    // The rule parser always runs (baseline); a model pass layers on top:
+    // user-pasted OpenAI key first, else the free gpt-oss worker. Chips carry
+    // exact values, so only free text is worth a model call.
     let x = applyAnswer(extraction, current, text, quickValue);
-    const key = getOpenAiKey();
-    if (key && !quickValue) {
+    if (!quickValue) {
+      const key = getOpenAiKey();
+      const convo = [...messages, { role: 'user' as const, text }];
       try {
-        x = await openaiExtract(key, [...messages, { role: 'user', text }], x);
+        x = key ? await openaiExtract(key, convo, x) : await workerExtract(convo, x);
       } catch {
         setFellBack(true);
       }
@@ -276,7 +283,9 @@ export default function ChatReport() {
 
   const providerBadge = hasKey
     ? t('chat.provider.liveBadge', { model: OPENAI_MODEL })
-    : t('chat.provider.demoBadge');
+    : INTAKE_ENDPOINT
+      ? t('chat.provider.ossBadge', { model: OSS_MODEL })
+      : t('chat.provider.demoBadge');
 
   const quickChips = (() => {
     if (busy || phase !== 'chat') return null;
