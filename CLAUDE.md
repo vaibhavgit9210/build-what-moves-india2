@@ -56,6 +56,40 @@ disappears; do not ask them to pick a branch there again.
   seed v2 replaces seeded reports r-1..r-8 with officered ones; **r-2 is
   deliberately overdue** so `?e2e=login` demos land on an armed escalation.
   i18n namespaces `plan` + `promise` (en+hi, keep parity).
+- **Authority portal (Aug 2026)**: `#/admin/*`, the officer side of the
+  accountability loop. Own route tree behind its OWN session
+  (`ncrpdemo.admin.session`, `AdminAuthContext`, `AdminShell` guards the tree),
+  fully separate from the citizen `AuthContext` in both directions.
+  `src/content/authorityRoster.ts` = CONTRACT FILE (twin of casePlans.ts): 6
+  synthetic officers, badge-id login, shared demo password `Officer@123`
+  (`gitleaks:allow`), units, `officer`/`in-charge` ranks, category
+  specialisations. **reportService no longer invents an officer** per report:
+  it draws from the roster deterministically (specialists first, then round
+  robin on refNumber) so the officer named to the reporter is the one who can
+  log in. Seeded reports assign officers EXPLICITLY (seed v3) because seeded
+  refNumbers move with today's date and a demo login must find the same
+  tickets every morning. Report model gained `verificationStatus`
+  (pending/verified/needs-more-info/rejected) + notes + `verifiedAt`,
+  `piiRequests[]`, `audit[]`; `CaseUpdate` gained optional `text` (verbatim,
+  authority-written), `note` and `actor`, so `textKey` is now OPTIONAL and the
+  reporter's update list renders `text ?? t(textKey)`. Pages:
+  `#/admin/login` (whole roster listed, one-click sign in),
+  `#/admin/tickets` (own tickets; in-charge gets a unit toggle + reassign),
+  `#/admin/tickets/:id` (masked identity + always-visible evidence,
+  verification form, post-update, activity log),
+  `#/admin/tickets/:id/fir-prep`. **PII gate**: identity masked by default,
+  officer requests with a reason, the REPORTER approves/denies on their own
+  report page (`PiiRequestPanel` in ReportDetail), grant unlocks that one
+  ticket only and is logged. Anonymous reports never show the request.
+  Evidence (amounts, UPI ids, txn ids, handles) is NOT PII and never masked.
+  **FIR prep pack**: unlocked only when verified; standard Indian FIR
+  proforma on the BNS 2023 regime, statutes from `casePlans.ts`, printed via
+  `window.print()` (A4 `@page` + `.no-print`), no PDF library. Worker route
+  `/fir-prep` (same provider chain as `/ask`) returns ONLY
+  `{checklist, briefFacts}`; every other section is assembled client side so
+  the model cannot invent one, and **the payload never contains reporter PII
+  even after a grant** (asserted). i18n namespace `admin` is **en only** for
+  now (t() falls back en → key, so Hindi shows English there).
 - **Two report modes** chosen on /report: `draft.mode = 'tracked' | 'anonymous'`.
   Anonymous skips the identity step everywhere (steps.ts helpers take an
   `anonymous` flag; stepper shows 4 steps; report gets `anonymous: true`, no
@@ -127,8 +161,20 @@ disappears; do not ask them to pick a branch there again.
 journey (no login, no identity, location method 'map' so the Leaflet map
 opens pre-pinned) · `?e2e=chat` seed a finished chat-intake conversation on
 `#/chat` ("Review and submit" visible) · `?e2e=chatform` same but already
-morphed into the pre-filled form · `?lang=hi` Hindi. Example:
-`…/build-what-moves-india2/?e2e=draft#/report/review`.
+morphed into the pre-filled form · `?e2e=adminlogin` sign in to the authority
+portal as SI Meera Nair (badge KA-CYB-1042) · `?e2e=adminticket` same, plus
+r-2 already verified so FIR prep is unlocked · `?lang=hi` Hindi. Examples:
+`…/build-what-moves-india2/?e2e=draft#/report/review`,
+`…/build-what-moves-india2/?e2e=adminlogin#/admin/tickets`.
+
+**Driving the interactive flows**: screenshots cannot click, so verification /
+PII-grant / reassign were verified with a throwaway CDP harness (Chrome with
+`--remote-debugging-port`, plain `WebSocket` from node, `Runtime.evaluate`).
+Two gotchas if you rebuild it: `timeout` does not exist on this machine (use a
+background process + poll for the PNG, since headless Chrome hangs on exit
+even after writing the screenshot), and `Page.navigate` to a URL differing only
+in the HASH does not reload, so a localStorage session swap is not picked up
+(vary the query string to force a real load).
 Headless Chrome: pages are rAF-free; use `--virtual-time-budget=8000
 --timeout=20000` and a fresh `--user-data-dir` per run (Chrome sometimes hangs
 on exit; kill strays with `pkill -f headless=new`).

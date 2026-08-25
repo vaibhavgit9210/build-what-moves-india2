@@ -9,5 +9,6 @@ import helpPanel from './helpPanel';
 import chat from './chat';
 import plan from './plan';
 import promise from './promise';
+import admin from './admin';
 
-export default { ...common, publicPages, auth, flow, tree, media, dash, helpPanel, chat, plan, promise };
+export default { ...common, publicPages, auth, flow, tree, media, dash, helpPanel, chat, plan, promise, admin };

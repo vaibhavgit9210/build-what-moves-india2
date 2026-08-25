@@ -35,6 +35,23 @@ You can also register a new account with any (fake) identifier — Aadhaar, PAN,
 passport, voter ID, driving licence, ration card, email or mobile. Nothing is
 validated against any real database.
 
+The **authority portal** at `#/admin/login` has its own roster of synthetic
+officers, all sharing the password `Officer@123`. Sign in with a badge id, or
+press "Use this account" on any row:
+
+| Badge | Officer | Rank | Unit |
+| --- | --- | --- | --- |
+| `KA-CYB-1042` | SI Meera Nair | Investigating officer | Bengaluru City Cyber Cell |
+| `KA-CYB-1188` | SI Arjun Patil | Investigating officer | Bengaluru City Cyber Cell |
+| `KA-CYB-2001` | Inspector Lakshmi Rao | Cyber cell in-charge | Bengaluru City Cyber Cell |
+| `DL-CYB-3307` | ASI Kavita Reddy | Investigating officer | Delhi North Cyber Cell |
+| `DL-CYB-3419` | SI Harpreet Gill | Investigating officer | Delhi North Cyber Cell |
+| `DL-CYB-4100` | Inspector Devendra Kumar | Cyber cell in-charge | Delhi North Cyber Cell |
+
+The authority session lives under its own localStorage key, so a citizen
+session can never open a ticket and an officer session can never open the
+citizen dashboard.
+
 ## The journey
 
 Landing → login/register → location (consent-first, simulated reverse
@@ -117,6 +134,57 @@ Understanding providers, honestly labeled in the UI:
   lexicon, in English and Hindi. Money moved recently surfaces a "call 1930
   now" banner.
 
+## The authority portal
+
+`#/admin` is the other side of the accountability loop: the officer a report
+was assigned to can sign in and work it. It is a separate route tree behind a
+separate session, sharing the same design language.
+
+- **Roster, not random.** `src/content/authorityRoster.ts` is the contract file
+  for the authority side (the twin of `casePlans.ts`): six synthetic officers
+  with badge ids, units, ranks and category specialisations. `reportService`
+  assigns officers from it deterministically (specialists first, then round
+  robin on the acknowledgement number), so the officer named to the reporter is
+  the same person who can log in and see the ticket.
+- **Queue.** `#/admin/tickets` lists the tickets assigned to you, with the
+  overdue flag read straight off the report's own `nextUpdateDue`. Hold the
+  `in-charge` rank and you see every ticket in your unit and can reassign
+  them, mirroring level 2 of the escalation matrix.
+- **Verification.** A ticket moves through `pending` → `verified` /
+  `needs-more-info` / `rejected`, each with a mandatory note and a timestamp.
+  The note is shown to the reporter. This is a real workflow step, kept
+  visually apart from the reporter-page demo controls that fake the backend.
+- **FIR preparation pack.** Unlocked only once a ticket is verified.
+  `#/admin/tickets/:id/fir-prep` lays the case out on the standard Indian FIR
+  proforma updated for the BNS 2023 regime: acts and sections pulled from
+  `casePlans.ts`, dates and place from the record, property particulars,
+  evidence list, and an officer checklist covering cognizability,
+  jurisdiction, evidence completeness, Zero FIR and the fourteen-day
+  preliminary-enquiry window. "Print or save as PDF" uses the browser's own
+  print path (A4 `@page` rules, app chrome hidden), so there is no PDF
+  library and no server.
+- **PII gate.** Identity details render masked. The officer can request them
+  with a written reason; the reporter approves or denies it on their own
+  report page; only then do they unmask, on that one ticket, with the grant
+  timestamped. Anonymous reports never show the request at all, because there
+  is nothing to release. Incident evidence (amounts, UPI ids, transaction
+  ids, scammer handles) is never masked: that is the case, not the person.
+- **Activity log.** Every verification change, update, reassignment and
+  identity request with its outcome, in order, on the ticket. This is what
+  makes the gate accountable rather than decorative.
+- **Updates reach the reporter.** Anything the officer posts is appended to
+  the report's existing `updates` array, the same list the tracking page and
+  dashboard already render. There is no second notification channel.
+
+The AI half is one new worker route, `/fir-prep`, following the `/ask`
+provider chain (Groq `llama-3.3-70b-versatile` when `GROQ_API_KEY` is set,
+keyless Workers AI otherwise, canned fallback last). It returns exactly two
+things, the officer checklist and a plain-language "brief facts" paragraph;
+every other section of the pack is assembled client side from the record, so
+the model cannot invent a section. **It is never sent reporter PII** (no name,
+contact details, identity document or OCR output) even after identity access
+has been granted, which is asserted by the test harness.
+
 ## Architecture
 
 ```
@@ -129,7 +197,8 @@ Mock data                  localStorage + src/data/demoData.ts
 
 - **Stack:** React 18 + TypeScript (strict) + Vite + Tailwind CSS v4 +
   React Router (hash routing, so deep links work on GitHub Pages).
-- **State:** three contexts — `AuthContext` (session), `DraftContext` (the
+- **State:** four contexts — `AuthContext` (citizen session),
+  `AdminAuthContext` (authority session, deliberately separate), `DraftContext` (the
   in-progress report; persisted to localStorage on every change so a refresh
   resumes where you left off), `SettingsContext` (accessibility preferences).
 - **Services (`src/services/`):** each is an isolated module with a clean
@@ -149,6 +218,12 @@ Mock data                  localStorage + src/data/demoData.ts
     downloaded from the Hugging Face Hub on first use), with an automatic
     clearly-labeled demo-transcript fallback when the model can't load.
   - `deviceService` — simulated technical/audit info (documentation-range IP).
+  - `adminAuthService` — authority sign in by badge id, in its own
+    localStorage namespace (`ncrpdemo.admin.session`).
+  - `adminService` — ticket scoping, verification, officer updates,
+    reassignment, the PII request/grant gate and the per-ticket audit log.
+  - `firPrepService` — builds the PII-free FIR payload and calls the worker's
+    `/fir-prep` route, falling back to the canned pack.
 - **Decision tree (`src/content/decisionTree.ts`):** declarative question list
   with `showIf` skip logic and a `classify()` that maps answers to a suggested
   category + priority. Guidance content lives in `src/content/guidance.ts`,
@@ -179,7 +254,11 @@ account, `?e2e=reset` wipes all demo storage, `?lang=hi` starts in Hindi.
 `?e2e=chat` seeds a finished chat-intake conversation on `#/chat` (the
 "Review and submit" state); `?e2e=chatform` seeds the same conversation
 already morphed into the pre-filled form.
-Example: `…/build-what-moves-india2/?e2e=login#/dashboard`.
+`?e2e=adminlogin` signs in to the authority portal as SI Meera Nair;
+`?e2e=adminticket` does the same and marks her financial-fraud ticket
+verified, so the FIR prep step is one click away.
+Examples: `…/build-what-moves-india2/?e2e=login#/dashboard`,
+`…/build-what-moves-india2/?e2e=adminlogin#/admin/tickets`.
 
 ## Replacing mocks with real APIs later
 
@@ -197,5 +276,10 @@ talks to storage directly.
   the UI).
 - The Whisper model needs a first-time download (~40 MB); offline or on very
   slow devices the demo transcript fallback is used and labeled as such.
-- Hindi + English only for now; the i18n layer is ready for more.
+- Hindi + English only for now; the i18n layer is ready for more. The
+  `admin` namespace is English only at this stage: `t()` falls back to
+  English per key, so the authority portal reads in English even with the
+  Hindi switcher on.
+- The authority portal's FIR pack "save as PDF" is the browser print dialog,
+  not a generated file. Deliberate: no PDF library, nothing server side.
 - No real identity verification, geocoding, OCR, or submission — by design.

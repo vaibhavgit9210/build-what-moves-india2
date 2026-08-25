@@ -53,4 +53,6 @@ export const KEYS = {
   sessionId: 'sessionId',
   chat: 'chatIntake',
   openaiKey: 'openaiKey',
+  /** Authority portal session. Deliberately separate from `session`. */
+  adminSession: 'admin.session',
 } as const;

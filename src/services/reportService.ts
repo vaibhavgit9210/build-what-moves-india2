@@ -12,6 +12,7 @@
 import { loadJSON, saveJSON, KEYS } from '@/lib/storage';
 import { makeRefNumber, uid } from '@/lib/id';
 import { casePlanFor, ESCALATION_MATRIX, entitledLevel } from '@/content/casePlans';
+import { assignAuthority, toCaseOfficer } from '@/content/authorityRoster';
 import type { CaseOfficer, CaseUpdate, DraftReport, Report, TechnicalInfo, User } from '@/lib/types';
 
 export function getAllReports(): Report[] {
@@ -38,24 +39,13 @@ export function trackReport(refNumber: string): Report | null {
   return getAllReports().find((r) => r.refNumber.toUpperCase() === ref) ?? null;
 }
 
-/** Synthetic officer pool; deterministic pick keeps demos reproducible. */
-const OFFICER_POOL: { name: string; rankKey: string }[] = [
-  { name: 'SI Meera Nair', rankKey: 'plan.roles.io' },
-  { name: 'SI Arjun Patil', rankKey: 'plan.roles.io' },
-  { name: 'ASI Kavita Reddy', rankKey: 'plan.roles.io' },
-  { name: 'SI Harpreet Gill', rankKey: 'plan.roles.io' },
-  { name: 'ASI Devendra Kumar', rankKey: 'plan.roles.io' },
-];
-
-function assignOfficer(report: Pick<Report, 'refNumber' | 'category' | 'location'>): CaseOfficer {
-  const seed = [...report.refNumber].reduce((a, c) => a + c.charCodeAt(0), 0);
-  const base = OFFICER_POOL[seed % OFFICER_POOL.length];
-  const city = report.location?.address.city;
-  return {
-    ...base,
-    unit: city ? `${city} District Cyber Cell` : 'District Cyber Cell',
-    phoneMasked: `+91 98XXX XX${String(200 + (seed % 700)).padStart(3, '0')}`,
-  };
+/**
+ * Officers come from the fixed roster (authorityRoster.ts) rather than being
+ * invented per report, so the officer named to the reporter is the same person
+ * who can sign in to the admin portal and see the ticket.
+ */
+function assignOfficer(report: Pick<Report, 'refNumber' | 'category'>): CaseOfficer {
+  return toCaseOfficer(assignAuthority(report.refNumber, report.category));
 }
 
 function hoursFrom(iso: string, hours: number): string {
@@ -76,7 +66,7 @@ export function submitReport(
   const category = draft.category ?? 'other';
   const plan = casePlanFor(category);
   const refNumber = makeRefNumber(now);
-  const officer = assignOfficer({ refNumber, category, location: draft.location });
+  const officer = assignOfficer({ refNumber, category });
   const financial = ['financial-fraud', 'investment-job-fraud', 'crypto-fraud', 'romance-scam'].includes(category);
   const updates: CaseUpdate[] = [
     { at: now.toISOString(), channel: 'sms', textKey: 'plan.updates.registered' },
@@ -112,12 +102,18 @@ export function submitReport(
     updates,
     escalationLevel: 1,
     escalations: [],
+    verificationStatus: 'pending',
+    piiRequests: [],
+    audit: [
+      { at: now.toISOString(), actor: officer.name, actorKind: 'system', actionKey: 'admin.audit.assigned' },
+    ],
   };
   saveAllReports([...getAllReports(), report]);
   return report;
 }
 
-function patchReport(id: string, patch: Partial<Report>): Report | null {
+/** Shared write path: merge a patch into one stored report. */
+export function patchReport(id: string, patch: Partial<Report>): Report | null {
   const all = getAllReports();
   const i = all.findIndex((r) => r.id === id || r.refNumber === id);
   if (i < 0) return null;

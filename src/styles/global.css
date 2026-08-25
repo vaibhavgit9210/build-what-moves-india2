@@ -166,7 +166,13 @@ dialog::backdrop { background: rgba(11, 12, 12, 0.6); }
 }
 .rec-dot { animation: pulse-rec 1.2s ease-in-out infinite; }
 
-/* Print: confirmation page download fallback */
+/* Print: confirmation page download fallback, and the FIR preparation pack,
+ * which is the app's "save as PDF" path (no PDF library, no server). */
 @media print {
   header, footer, nav, .no-print { display: none !important; }
+  /* The pack's own footer carries the not-a-legal-document notice. */
+  article footer { display: block !important; }
+  article { max-width: none !important; }
+  body { background: #fff; }
 }
+@page { size: A4; margin: 18mm; }

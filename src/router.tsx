@@ -40,6 +40,13 @@ const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const ReportDetail = lazy(() => import('@/pages/ReportDetail'));
 const Track = lazy(() => import('@/pages/Track'));
 
+// Authority portal: its own shell, its own session, its own route tree.
+const AdminShell = lazy(() => import('@/components/shell/AdminShell'));
+const AdminLogin = lazy(() => import('@/pages/admin/AdminLogin'));
+const AdminTickets = lazy(() => import('@/pages/admin/AdminTickets'));
+const AdminTicketDetail = lazy(() => import('@/pages/admin/AdminTicketDetail'));
+const AdminFirPrep = lazy(() => import('@/pages/admin/AdminFirPrep'));
+
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
@@ -107,6 +114,21 @@ export const router = createHashRouter([
       { path: '/reports/:id', element: wrap(<ReportDetail />, true) },
 
       { path: '*', element: wrap(<NotFound />) },
+    ],
+  },
+  {
+    // AdminShell itself guards the tree: no authority session, no tickets.
+    element: (
+      <Suspense fallback={<Spinner />}>
+        <AdminShell />
+      </Suspense>
+    ),
+    children: [
+      { path: '/admin', element: <Navigate to="/admin/tickets" replace /> },
+      { path: '/admin/login', element: wrap(<AdminLogin />) },
+      { path: '/admin/tickets', element: wrap(<AdminTickets />) },
+      { path: '/admin/tickets/:id', element: wrap(<AdminTicketDetail />) },
+      { path: '/admin/tickets/:id/fir-prep', element: wrap(<AdminFirPrep />) },
     ],
   },
 ]);

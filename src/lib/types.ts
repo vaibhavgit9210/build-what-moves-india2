@@ -185,6 +185,8 @@ export interface TimelineEvent {
 
 /** The (synthetic) officer accountable for a report right now. */
 export interface CaseOfficer {
+  /** Roster id (authorityRoster.ts). Matches the admin portal login. */
+  id: string;
   name: string;
   /** i18n key for the rank/role, e.g. plan.roles.io */
   rankKey: string;
@@ -198,7 +200,46 @@ export interface CaseUpdate {
   at: string; // ISO
   channel: 'sms' | 'email' | 'portal';
   /** i18n key under plan.updates.*; {ref}, {officer}, {date} interpolated. */
-  textKey: string;
+  textKey?: string;
+  /** Verbatim message written by an authority in the admin portal. */
+  text?: string;
+  /** The officer's own words alongside a templated `textKey` sentence. */
+  note?: string;
+  /** Who sent it, for authority-authored updates. */
+  actor?: string;
+}
+
+/**
+ * Where the authority has got to on checking the report is real and
+ * actionable. Distinct from ReportStatus, which is the investigation stage.
+ */
+export type VerificationStatus = 'pending' | 'verified' | 'needs-more-info' | 'rejected';
+
+/**
+ * An authority asking the reporter to release their identity details for one
+ * ticket. Nothing unmasks until the reporter grants it from their own pages.
+ */
+export interface PiiAccessRequest {
+  id: string;
+  /** Roster id of the requesting authority. */
+  requestedBy: string;
+  requestedByName: string;
+  requestedAt: string; // ISO
+  reason: string;
+  status: 'pending' | 'granted' | 'denied';
+  decidedAt?: string; // ISO
+}
+
+/** One line of the per-ticket accountability log. */
+export interface AuditEntry {
+  at: string; // ISO
+  /** Display name of whoever acted. */
+  actor: string;
+  actorKind: 'authority' | 'reporter' | 'system';
+  /** i18n key under admin.audit.*; params interpolated. */
+  actionKey: string;
+  /** Free text the actor themselves typed (a note or a reason). */
+  detail?: string;
 }
 
 /** One escalation the reporter has raised. */
@@ -238,4 +279,10 @@ export interface Report {
   /** Current escalation-matrix level (1 = investigating officer). */
   escalationLevel?: number;
   escalations?: EscalationEvent[];
+  /** Authority-portal layer (absent on reports filed before it existed). */
+  verificationStatus?: VerificationStatus;
+  verificationNotes?: string;
+  verifiedAt?: string; // ISO
+  piiRequests?: PiiAccessRequest[];
+  audit?: AuditEntry[];
 }

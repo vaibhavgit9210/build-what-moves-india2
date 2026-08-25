@@ -5,9 +5,10 @@ import './styles/global.css';
 import { router } from './router';
 import { I18nProvider } from './i18n';
 import { AuthProvider } from './state/AuthContext';
+import { AdminAuthProvider } from './state/AdminAuthContext';
 import { DraftProvider } from './state/DraftContext';
 import { SettingsProvider } from './state/SettingsContext';
-import { seedDemoData } from './data/demoData';
+import { seedDemoData, seedVerifiedTicket } from './data/demoData';
 import { clearAll, saveJSON, KEYS } from './lib/storage';
 
 async function boot() {
@@ -20,6 +21,9 @@ async function boot() {
   //   ?e2e=chat     — seed a finished chat-intake conversation on #/chat
   //                   ("Review and submit" visible)
   //   ?e2e=chatform — same, already morphed into the pre-filled form
+  //   ?e2e=adminlogin  — sign in to the authority portal as the demo officer
+  //   ?e2e=adminticket — same, plus r-2 already verified so the FIR prep
+  //                      step is unlocked
   const params = new URLSearchParams(window.location.search);
   const e2e = params.get('e2e');
   if (e2e === 'reset') clearAll();
@@ -27,6 +31,8 @@ async function boot() {
   await seedDemoData();
 
   if (e2e === 'login' || e2e === 'draft') saveJSON(KEYS.session, 'u-rahul');
+  if (e2e === 'adminlogin' || e2e === 'adminticket') saveJSON(KEYS.adminSession, 'a-meera');
+  if (e2e === 'adminticket') seedVerifiedTicket();
   if (e2e === 'draft' || e2e === 'anon') {
     saveJSON(KEYS.draft, {
       startedAt: new Date().toISOString(),
@@ -116,9 +122,11 @@ async function boot() {
       <I18nProvider>
         <SettingsProvider>
           <AuthProvider>
-            <DraftProvider>
-              <RouterProvider router={router} />
-            </DraftProvider>
+            <AdminAuthProvider>
+              <DraftProvider>
+                <RouterProvider router={router} />
+              </DraftProvider>
+            </AdminAuthProvider>
           </AuthProvider>
         </SettingsProvider>
       </I18nProvider>

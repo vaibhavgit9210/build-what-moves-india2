@@ -14,8 +14,8 @@ import {
 } from '@/services/reportService';
 import { categoryById } from '@/content/categories';
 import { casePlanFor, entitledLevel, ESCALATION_MATRIX } from '@/content/casePlans';
-import { incidentFieldsByCategory, type IncidentField } from '@/content/incidentFields';
-import type { CategoryId } from '@/lib/types';
+import { humanize, incidentFieldById } from '@/lib/incidentDisplay';
+import { decidePiiRequest, pendingPiiRequest } from '@/services/adminService';
 import { Button } from '@/components/ui/Button';
 import { Alert, Card, PageTitle } from '@/components/ui/Misc';
 import { StatusTag, StatusTimeline } from '@/components/dash/StatusTimeline';
@@ -28,30 +28,6 @@ function Row({ label, value }: { label: string; value: ReactNode }) {
       <dd className="m-0 font-medium break-words">{value}</dd>
     </div>
   );
-}
-
-/** "amount-lost" / "amountLost" -> "Amount Lost". Fallback for unknown ids only. */
-function humanize(id: string): string {
-  return id
-    .replace(/[-_]+/g, ' ')
-    .replace(/([a-z\d])([A-Z])/g, '$1 $2')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-/**
- * Field definitions keyed by id: the report's category fields first, then all
- * other categories as a fallback for ids stored under a different category.
- */
-function incidentFieldById(category: CategoryId | undefined): Map<string, IncidentField> {
-  const map = new Map<string, IncidentField>();
-  const lists: IncidentField[][] = category ? [incidentFieldsByCategory[category]] : [];
-  lists.push(...Object.values(incidentFieldsByCategory));
-  for (const fields of lists) {
-    for (const field of fields) {
-      if (!map.has(field.id)) map.set(field.id, field);
-    }
-  }
-  return map;
 }
 
 /**
@@ -161,12 +137,20 @@ function AccountabilityPanel({
                   {t(`plan.channels.${u.channel}`)}
                 </span>
                 <span>
-                  <span className="block text-xs text-muted">{formatDate(u.at, lang, true)}</span>
-                  {t(u.textKey, {
-                    ref: report.refNumber,
-                    officer: report.officer?.name ?? '',
-                    days: plan.updateEveryDays,
-                  })}
+                  <span className="block text-xs text-muted">
+                    {formatDate(u.at, lang, true)}
+                    {u.actor ? ` · ${u.actor}` : ''}
+                  </span>
+                  {/* Authority-written messages are verbatim; the rest are templated. */}
+                  {u.text ??
+                    (u.textKey
+                      ? t(u.textKey, {
+                          ref: report.refNumber,
+                          officer: u.actor ?? report.officer?.name ?? '',
+                          days: plan.updateEveryDays,
+                        })
+                      : '')}
+                  {u.note && <span className="block text-sm text-muted mt-0.5">“{u.note}”</span>}
                 </span>
               </li>
             ))}
@@ -198,6 +182,83 @@ function AccountabilityPanel({
           </Button>
         </div>
       </Card>
+    </section>
+  );
+}
+
+/**
+ * The reporter's half of the PII gate. An officer can ask for the identity
+ * details behind a ticket, but nothing unmasks until the person who filed the
+ * report approves it here, and either way the decision is logged.
+ */
+function PiiRequestPanel({
+  report,
+  reporterName,
+  refresh,
+}: {
+  report: NonNullable<ReturnType<typeof getReport>>;
+  reporterName: string;
+  refresh: () => void;
+}) {
+  const { t, lang } = useI18n();
+  const pending = pendingPiiRequest(report);
+  const decided = [...(report.piiRequests ?? [])].reverse().find((r) => r.status !== 'pending');
+
+  if (!pending && !decided) return null;
+
+  return (
+    <section aria-labelledby="pii-heading" className="mb-8">
+      <h2 id="pii-heading" className="text-2xl font-bold mb-3">
+        {t('admin.pii.reporter.title')}
+      </h2>
+      {pending ? (
+        <Card className="max-w-2xl border-warn">
+          <p className="mt-0">
+            {t('admin.pii.reporter.body', {
+              officer: pending.requestedByName,
+              ref: report.refNumber,
+            })}
+          </p>
+          <p className="mb-1 font-semibold">{t('admin.pii.reporter.reasonLabel')}</p>
+          <p className="bg-surface border border-border rounded-md p-3 mt-0">“{pending.reason}”</p>
+          <p className="text-sm text-muted">{t('admin.pii.reporter.note')}</p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => {
+                decidePiiRequest(report.id, pending.id, 'granted', reporterName);
+                refresh();
+              }}
+            >
+              {t('admin.pii.reporter.approve')}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                decidePiiRequest(report.id, pending.id, 'denied', reporterName);
+                refresh();
+              }}
+            >
+              {t('admin.pii.reporter.deny')}
+            </Button>
+          </div>
+        </Card>
+      ) : (
+        decided && (
+          <Card className="max-w-2xl">
+            <p className="m-0">
+              {t(
+                decided.status === 'granted'
+                  ? 'admin.pii.reporter.approved'
+                  : 'admin.pii.reporter.denied',
+                {
+                  date: formatDate(decided.decidedAt ?? decided.requestedAt, lang, true),
+                  officer: decided.requestedByName,
+                },
+              )}
+            </p>
+          </Card>
+        )
+      )}
     </section>
   );
 }
@@ -252,6 +313,8 @@ export default function ReportDetail() {
       <Alert variant="info" title={t('common.demoData')}>
         <p className="m-0">{t('dash.detail.demoNote')}</p>
       </Alert>
+
+      <PiiRequestPanel report={report} reporterName={user.name} refresh={refresh} />
 
       <AccountabilityPanel report={report} refresh={refresh} />
 

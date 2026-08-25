@@ -16,6 +16,11 @@
  *   OpenAI-model brain with no key anywhere. Returns the model's raw text;
  *   the frontend parses/validates the JSON and merges it.
  *
+ * POST /fir-prep {case facts} -> {checklist, briefFacts, provider}
+ *   The authority portal's FIR preparation pack. Same provider chain as /ask.
+ *   Receives the case (category, statutes, incident, evidence, money, dates)
+ *   and never the reporter's identity. See handleFirPrep below.
+ *
  * The /ask assistant is deliberately STATELESS and firewalled from the
  * report: the frontend never sends complaint text there. /intake by contrast
  * IS the intake channel: it receives what the user typed into the chat, uses
@@ -181,12 +186,131 @@ async function handleBrief(request, env) {
   return json({ error: 'upstream' }, 502);
 }
 
+/**
+ * POST /fir-prep {category, statutes, description, details, evidence,
+ *                 financial, dates, place, lang}
+ *   -> {checklist: string[], briefFacts: string, provider}
+ *
+ * The authority portal's FIR preparation pack. Same provider chain as /ask:
+ * Groq llama-3.3-70b-versatile when GROQ_API_KEY is set, keyless Workers AI
+ * otherwise; on failure the client falls back to its own canned checklist.
+ *
+ * This route receives the CASE and never the PERSON: the frontend builds the
+ * payload from the report record with reporter name, contact details, identity
+ * document and OCR output stripped out. Nothing is stored here.
+ */
+const FIR_CHECKS = [
+  'confirm the offence disclosed is cognizable, and that registration is mandatory once it is',
+  'confirm jurisdiction and the correct police station from the place of occurrence given',
+  'confirm the evidence list is complete and each item is preserved with its source details',
+  'note that a Zero FIR can be registered at any police station regardless of jurisdiction, and lack of jurisdiction is never a reason to turn the complainant away',
+  'note that for offences punishable between three and seven years a preliminary enquiry may be conducted first and must be completed within fourteen days before registering the FIR',
+  'check the listed acts and sections against the facts; they come from the Bharatiya Nyaya Sanhita 2023 and the special acts, not the repealed Indian Penal Code',
+];
+
+function firInstructions(lang) {
+  return (
+    `You help an Indian police officer prepare to register an FIR from an online cybercrime complaint. ` +
+    `Return ONLY a JSON object with exactly two keys:\n` +
+    `"checklist": an array of 6 short plain-language checks the officer should make before registering the FIR. Cover, in this order: ${FIR_CHECKS.join('; ')}.\n` +
+    `"briefFacts": one paragraph, 4 to 7 sentences, retelling the incident in neutral third-person report language for the "brief facts of the case" section.\n` +
+    `Hard rules: use ONLY the case facts given. Never invent a name, a date, an amount, a place or a section. ` +
+    `The complainant's identity is deliberately not given to you: never refer to them by name, write "the complainant". ` +
+    `No emojis, no markdown, no headings, no em dashes. Write in ${lang}.`
+  );
+}
+
+function firFactsBlock(body) {
+  const list = (label, arr) =>
+    Array.isArray(arr) && arr.length ? `${label}:\n${arr.map((x) => `- ${String(x).slice(0, 400)}`).join('\n')}` : '';
+  return [
+    `Category: ${String(body.category ?? '').slice(0, 200)}`,
+    list('Applicable acts and sections', body.statutes),
+    `Complainant's description of the incident: ${String(body.description ?? '').slice(0, 4000)}`,
+    list('Structured incident details', body.details),
+    list('Dates recorded', body.dates),
+    list('Money and property involved', body.financial),
+    list('Evidence attached', body.evidence),
+    body.place ? `Place of occurrence: ${String(body.place).slice(0, 300)}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+}
+
+/** Model output is prose-wrapped often enough that a bare JSON.parse is not enough. */
+function parseFirJson(raw) {
+  const text = raw.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start < 0 || end <= start) return null;
+  let parsed;
+  try {
+    parsed = JSON.parse(text.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+  const checklist = Array.isArray(parsed?.checklist)
+    ? parsed.checklist.filter((s) => typeof s === 'string' && s.trim()).map((s) => s.trim())
+    : [];
+  const briefFacts = typeof parsed?.briefFacts === 'string' ? parsed.briefFacts.trim() : '';
+  if (checklist.length === 0 || !briefFacts) return null;
+  return { checklist, briefFacts };
+}
+
+async function handleFirPrep(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'bad-request' }, 400);
+  }
+  const description = typeof body?.description === 'string' ? body.description : '';
+  if (!body?.category || (!description && !Array.isArray(body?.details))) {
+    return json({ error: 'bad-request' }, 400);
+  }
+  const lang = body?.lang === 'hi' ? 'Hindi' : 'English';
+  const instructions = firInstructions(lang);
+  const facts = firFactsBlock(body);
+
+  if (env.GROQ_API_KEY) {
+    try {
+      const res = await askGroq(env, [
+        { role: 'system', content: instructions },
+        { role: 'user', content: facts },
+      ]);
+      const parsed = parseFirJson(res.answer);
+      if (parsed) return json({ ...parsed, provider: 'groq' });
+    } catch {
+      // Fall through to Workers AI.
+    }
+  }
+  if (env.AI) {
+    try {
+      const data = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+        messages: [
+          { role: 'system', content: instructions },
+          { role: 'user', content: facts },
+        ],
+        max_tokens: 900,
+        temperature: 0.2,
+      });
+      const parsed = parseFirJson((data?.response ?? '').trim());
+      if (parsed) return json({ ...parsed, provider: 'workers-ai' });
+    } catch {
+      // Fall through to the error below; the client has a canned pack.
+    }
+    return json({ error: 'upstream' }, 502);
+  }
+  return json({ error: 'not-configured' }, 503);
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     const url = new URL(request.url);
     if (request.method === 'POST' && url.pathname === '/intake') return handleIntake(request, env);
     if (request.method === 'POST' && url.pathname === '/brief') return handleBrief(request, env);
+    if (request.method === 'POST' && url.pathname === '/fir-prep') return handleFirPrep(request, env);
     if (request.method !== 'POST' || url.pathname !== '/ask') return json({ error: 'not-found' }, 404);
 
     let body;

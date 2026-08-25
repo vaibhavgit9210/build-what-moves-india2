@@ -23,6 +23,7 @@ function Footer() {
           <Link to="/safety" className="text-ink">{t('footer.safety')}</Link>
           <Link to="/privacy" className="text-ink">{t('footer.privacy')}</Link>
           <Link to="/accessibility" className="text-ink">{t('footer.accessibilityStatement')}</Link>
+          <Link to="/admin/login" className="text-ink">{t('admin.citizenFooterLink')}</Link>
         </nav>
         <p className="text-sm text-muted max-w-3xl">{t('footer.disclaimer')}</p>
         <p className="text-sm text-muted mt-2">{t('footer.builtNote')}</p>

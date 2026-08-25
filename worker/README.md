@@ -1,8 +1,12 @@
 # sahayata-help worker
 
-Serverless backend for the in-form "Need help?" assistant. A stateless,
-dependency-free Cloudflare Worker (vaibhavpro9210 account) that forwards one
-question at a time to:
+Serverless backend for the AI features of the Cyber Sahayata prototype:
+the in-form "Need help?" assistant (`/ask`), chat-report extraction
+(`/intake`), the grounded case-plan rephrase (`/brief`) and the authority
+portal's FIR preparation pack (`/fir-prep`).
+
+A stateless, dependency-free Cloudflare Worker (vaibhavpro9210 account).
+`/ask` forwards one question at a time to:
 
 1. **Groq** (`llama-3.3-70b-versatile`) when the `GROQ_API_KEY` secret is set;
 2. **Workers AI** (`@cf/meta/llama-3.3-70b-instruct-fp8-fast`) via the keyless
@@ -38,3 +42,24 @@ npx wrangler secret put GROQ_API_KEY   # optional, upgrades answers to Groq
 `POST /ask` with `{"question": "...", "lang": "en" | "hi"}` →
 `{"answer": "...", "provider": "groq" | "workers-ai"}`.
 Errors: 400 bad request, 502 upstream, 503 not configured.
+
+`POST /intake` with `{"spec": "...", "messages": [...]}` →
+`{"raw": "...", "provider": "..."}`. Extraction turn for the chat report;
+runs gpt-oss-120b, falling back to gpt-oss-20b then llama.
+
+`POST /brief` with `{"facts": "...", "lang": "..."}` → `{"raw", "provider"}`.
+Rephrases case-plan facts, hard-grounded to the facts given.
+
+`POST /fir-prep` with the case facts
+(`{category, statutes, description, details, evidence, financial, dates,
+place, lang}`) → `{"checklist": [...], "briefFacts": "...", "provider"}`.
+Same provider chain as `/ask`. It returns only those two things; the client
+assembles every other section of the pack from the report record, so the
+model cannot invent a section.
+
+**This route receives the case and never the person.** The frontend
+(`src/services/firPrepService.ts`) strips reporter name, contact details,
+identity document and OCR output out of the payload, including on tickets
+where the reporter has granted the officer identity access. Incident evidence
+(amounts, UPI ids, transaction ids, scammer handles) IS sent, because that is
+the evidentiary substance of the case.
