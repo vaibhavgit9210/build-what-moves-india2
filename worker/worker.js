@@ -237,6 +237,21 @@ function firFactsBlock(body) {
     .join('\n\n');
 }
 
+/**
+ * Models like to "typeset" their answers: non-breaking hyphens, narrow spaces,
+ * em dashes. On a pack an officer copies a transaction id out of, U+2011 in
+ * place of a plain hyphen is a correctness bug, not a cosmetic one. It also
+ * keeps AI output to the same no-em-dash rule the written copy follows.
+ */
+function tidy(s) {
+  return s
+    .replace(/[‐-―−]/g, '-')
+    .replace(/[    ]/g, ' ')
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .trim();
+}
+
 /** Model output is prose-wrapped often enough that a bare JSON.parse is not enough. */
 function parseFirJson(raw) {
   const text = raw.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
@@ -250,9 +265,9 @@ function parseFirJson(raw) {
     return null;
   }
   const checklist = Array.isArray(parsed?.checklist)
-    ? parsed.checklist.filter((s) => typeof s === 'string' && s.trim()).map((s) => s.trim())
+    ? parsed.checklist.filter((s) => typeof s === 'string' && s.trim()).map(tidy)
     : [];
-  const briefFacts = typeof parsed?.briefFacts === 'string' ? parsed.briefFacts.trim() : '';
+  const briefFacts = typeof parsed?.briefFacts === 'string' ? tidy(parsed.briefFacts) : '';
   if (checklist.length === 0 || !briefFacts) return null;
   return { checklist, briefFacts };
 }
@@ -272,6 +287,8 @@ async function handleFirPrep(request, env) {
   const instructions = firInstructions(lang);
   const facts = firFactsBlock(body);
 
+  // A model that answers but wraps the JSON in prose is as useless here as one
+  // that errors, so a failed PARSE falls through to the next provider too.
   if (env.GROQ_API_KEY) {
     try {
       const res = await askGroq(env, [
@@ -284,24 +301,33 @@ async function handleFirPrep(request, env) {
       // Fall through to Workers AI.
     }
   }
-  if (env.AI) {
-    try {
-      const data = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
-        messages: [
-          { role: 'system', content: instructions },
-          { role: 'user', content: facts },
-        ],
-        max_tokens: 900,
-        temperature: 0.2,
-      });
-      const parsed = parseFirJson((data?.response ?? '').trim());
-      if (parsed) return json({ ...parsed, provider: 'workers-ai' });
-    } catch {
-      // Fall through to the error below; the client has a canned pack.
-    }
-    return json({ error: 'upstream' }, 502);
+  if (!env.AI) return json({ error: 'not-configured' }, 503);
+
+  try {
+    const data = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+      messages: [
+        { role: 'system', content: instructions },
+        { role: 'user', content: facts },
+      ],
+      max_tokens: 1200,
+      temperature: 0.2,
+    });
+    const parsed = parseFirJson((data?.response ?? '').trim());
+    if (parsed) return json({ ...parsed, provider: 'workers-ai' });
+  } catch {
+    // Fall through to gpt-oss.
   }
-  return json({ error: 'not-configured' }, 503);
+  // gpt-oss holds a JSON-only instruction better than llama does, which is why
+  // /intake runs on it as well.
+  for (const model of ['@cf/openai/gpt-oss-120b', '@cf/openai/gpt-oss-20b']) {
+    try {
+      const parsed = parseFirJson(await runGptOss(env, model, instructions, facts));
+      if (parsed) return json({ ...parsed, provider: model });
+    } catch {
+      // Try the next model.
+    }
+  }
+  return json({ error: 'upstream' }, 502);
 }
 
 export default {
