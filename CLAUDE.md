@@ -85,11 +85,17 @@ disappears; do not ask them to pick a branch there again.
   **FIR prep pack**: unlocked only when verified; standard Indian FIR
   proforma on the BNS 2023 regime, statutes from `casePlans.ts`, printed via
   `window.print()` (A4 `@page` + `.no-print`), no PDF library. Worker route
-  `/fir-prep` (same provider chain as `/ask`) returns ONLY
-  `{checklist, briefFacts}`; every other section is assembled client side so
+  `/fir-prep` (same provider chain as `/ask`, but **gpt-oss before llama**
+  inside the keyless step: llama wraps the JSON in prose essentially every
+  time, so llama-first just cost ~15s before the retry that works; a failed
+  PARSE falls through to the next provider, not just a thrown error; live
+  generation takes 10-25s) returns ONLY `{checklist, briefFacts}`; every other section is assembled client side so
   the model cannot invent one, and **the payload never contains reporter PII
-  even after a grant** (asserted). i18n namespace `admin` is **en only** for
-  now (t() falls back en → key, so Hindi shows English there).
+  even after a grant** (asserted). The worker `tidy()`s model output:
+  gpt-oss emits non-breaking hyphens (U+2011) and narrow spaces, which
+  **corrupted a transaction id** on a pack an officer copies from. i18n
+  namespace `admin` is **en only** for now (t() falls back en → key, so Hindi
+  shows English there).
 - **Two report modes** chosen on /report: `draft.mode = 'tracked' | 'anonymous'`.
   Anonymous skips the identity step everywhere (steps.ts helpers take an
   `anonymous` flag; stepper shows 4 steps; report gets `anonymous: true`, no

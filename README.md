@@ -178,7 +178,11 @@ separate session, sharing the same design language.
 
 The AI half is one new worker route, `/fir-prep`, following the `/ask`
 provider chain (Groq `llama-3.3-70b-versatile` when `GROQ_API_KEY` is set,
-keyless Workers AI otherwise, canned fallback last). It returns exactly two
+keyless Workers AI otherwise, canned fallback last). Inside the keyless step
+gpt-oss goes first: llama answers but wraps the JSON in prose essentially
+every time, so trying it first only added a wait before the retry that works.
+Expect 10 to 25 seconds for a live generation; the record-derived pack is
+already on screen while it runs. It returns exactly two
 things, the officer checklist and a plain-language "brief facts" paragraph;
 every other section of the pack is assembled client side from the record, so
 the model cannot invent a section. **It is never sent reporter PII** (no name,

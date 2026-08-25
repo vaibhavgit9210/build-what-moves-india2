@@ -303,6 +303,18 @@ async function handleFirPrep(request, env) {
   }
   if (!env.AI) return json({ error: 'not-configured' }, 503);
 
+  // Within the keyless Workers AI step, gpt-oss goes FIRST. llama-3.3-70b
+  // answers this prompt but wraps the JSON in prose essentially every time, so
+  // trying it first only bought a ~15s wait before the retry that works. Same
+  // reason /intake runs on gpt-oss. llama stays as the last-chance attempt.
+  for (const model of ['@cf/openai/gpt-oss-120b', '@cf/openai/gpt-oss-20b']) {
+    try {
+      const parsed = parseFirJson(await runGptOss(env, model, instructions, facts));
+      if (parsed) return json({ ...parsed, provider: model });
+    } catch {
+      // Try the next model.
+    }
+  }
   try {
     const data = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
       messages: [
@@ -315,17 +327,7 @@ async function handleFirPrep(request, env) {
     const parsed = parseFirJson((data?.response ?? '').trim());
     if (parsed) return json({ ...parsed, provider: 'workers-ai' });
   } catch {
-    // Fall through to gpt-oss.
-  }
-  // gpt-oss holds a JSON-only instruction better than llama does, which is why
-  // /intake runs on it as well.
-  for (const model of ['@cf/openai/gpt-oss-120b', '@cf/openai/gpt-oss-20b']) {
-    try {
-      const parsed = parseFirJson(await runGptOss(env, model, instructions, facts));
-      if (parsed) return json({ ...parsed, provider: model });
-    } catch {
-      // Try the next model.
-    }
+    // Fall through; the client shows its canned pack.
   }
   return json({ error: 'upstream' }, 502);
 }
