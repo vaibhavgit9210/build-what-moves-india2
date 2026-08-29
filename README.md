@@ -309,6 +309,49 @@ So for financial fraud the citation is always BNS 2023 s.318, IT Act 2000 s.66D 
 
 One indirect effect worth naming: the model's `urgent` boolean can raise a chat filed report from `standard` to `immediate` priority in `buildDraft()`. Deadlines still come only from the category's case plan.
 
+## What it costs to run, and what we would buy at scale
+
+Running cost today is zero. Not "cheap", zero. There is no server bill, no database bill, no model bill
+and no API key anywhere in the project. That was a design constraint from the first commit, not a
+happy accident, and it is why the stack looks the way it does.
+
+The rule was simple: anything that bills per use gets replaced by something that runs on a free tier
+or on the user's own device.
+
+| Normally costs money | What we did instead | Why it was worth it |
+| --- | --- | --- |
+| Application server | No backend. Static hosting on Cloudflare Pages and GitHub Pages | A judge can open the whole journey with nothing running |
+| Database | `localStorage`, with `src/services/*` as the seam a real API would slot into | The seam is the design. Swapping it is a day of work, not a rewrite |
+| Hosted LLM per token | OpenAI `gpt-oss-120b`, open weight, keyless on Cloudflare Workers AI | Open weight models are served free. The demo works for a stranger with no key |
+| Speech to text per minute | Whisper running in the browser | Cheaper and more private. The audio never leaves the device |
+| Maps and geocoding per load | Leaflet with OpenStreetMap tiles | A pin picker with no billing account attached |
+| Object storage for evidence | In memory only, and the UI says so rather than faking an upload | Honest about being a prototype instead of pretending |
+| Auth provider | A mock session with a printed demo account | Nothing to buy, and nothing real to leak |
+
+The one thing we would not change to save money is Whisper on the device. It is cheaper *and* better,
+because a description of a crime should not travel somewhere to be transcribed.
+
+### If this were funded, what we would actually buy
+
+In roughly this order, because this is the order in which the free version stops being honest.
+
+1. **A real backend and database.** Today a report only exists in the browser that filed it. That is the
+   single biggest gap between this and a service. `src/services/*` is where it plugs in.
+2. **Encrypted evidence storage** with retention rules and chain of custody. Screenshots of a fraud are
+   evidence, and holding them in memory is fine for a demo and unacceptable for a case.
+3. **A paid model tier.** Move intake from the keyless free tier to `gpt-4o-mini` or better on the OpenAI
+   API. The free tier has no latency guarantee and no availability guarantee, which is fine for a
+   prototype and not fine for someone reporting a crime at 2am. The client already supports this path:
+   paste a key and it switches.
+4. **Real identity verification** through DigiLocker or the Aadhaar APIs, replacing the simulated
+   document read in `ocrService.ts`. This is a government integration more than a purchase.
+5. **Audit and observability storage**, so the activity log on every ticket is durable and admissible
+   rather than a browser array.
+
+Notice what is not on that list. The classification prompt, the seventeen category taxonomy, the statute
+mapping, the deadline model and the escalation ladder are all already the real thing. Funding would buy
+infrastructure. It would not change the design.
+
 ## Data and privacy
 
 Everything is demo data. Reports, users, officers and evidence come from `src/data/demoData.ts` and live in `localStorage` under `ncrpdemo.*`. There is no shared database. A report is only visible in the browser that filed it. Nothing is submitted to the National Cyber Crime Reporting Portal, Aadhaar, any police system or any bank.
