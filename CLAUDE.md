@@ -33,6 +33,24 @@ until the Actions deployment lands last and wins. If the user ever flips
 Settings → Pages → Source to "GitHub Actions" in Brave, the blank window
 disappears; do not ask them to pick a branch there again.
 
+## Two live URLs, only one of them automatic
+
+- **Primary, the one the README and the hackathon submission point at:**
+  https://cyber-sahayata.pages.dev/ . Cloudflare Pages project `cyber-sahayata` on the
+  vaibhavpro9210 account. It is served at the ROOT, so it needs its own build with a
+  different Vite base. **It does NOT update on `git push`.** After any change:
+  ```bash
+  npx vite build --base=/ --outDir dist-cf
+  npx wrangler pages deploy dist-cf --project-name cyber-sahayata --branch main --commit-dirty=true
+  ```
+  `dist-cf/` is gitignored. Forgetting this leaves the primary link stale while the mirror moves.
+- **Mirror:** https://vaibhavkumar.is-a.dev/build-what-moves-india2/ , GitHub Pages, built by CI
+  on every push to `main`, base `/build-what-moves-india2/`. This one is automatic.
+
+Screenshots for the README live in `docs/screens/*.png`, 15 of them, captured from the live site.
+Regenerate with headless Chrome using `--virtual-time-budget=4000`; a larger budget makes the
+admin routes hang because virtual time never settles.
+
 ## Shape
 
 - Vite base `/build-what-moves-india2/`, HashRouter (deep links work on Pages).
