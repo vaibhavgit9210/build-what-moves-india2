@@ -1,0 +1,1 @@
+import{i as t}from"./incidentFields-Bxev7_AX.js";function r(i){return i.replace(/[-_]+/g," ").replace(/([a-z\d])([A-Z])/g,"$1 $2").replace(/\b\w/g,e=>e.toUpperCase())}function c(i){const e=new Map,s=i?[t[i]]:[];s.push(...Object.values(t));for(const o of s)for(const n of o)e.has(n.id)||e.set(n.id,n);return e}export{r as h,c as i};
