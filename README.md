@@ -331,6 +331,23 @@ or on the user's own device.
 The one thing we would not change to save money is Whisper on the device. It is cheaper *and* better,
 because a description of a crime should not travel somewhere to be transcribed.
 
+### The actual ceiling
+
+Worth knowing where the free version stops, because "free" without a limit is a claim nobody should believe.
+Figures from Cloudflare's own pricing pages, checked 29 August 2026.
+
+| | Free allowance | What the next step costs |
+| --- | --- | --- |
+| Cloudflare Workers, which fronts every AI call | 100,000 requests per day, 10 ms CPU per invocation | Workers Paid at $5 per month, 10 million requests included |
+| Workers AI, which serves `gpt-oss-120b` | 10,000 Neurons per day at no charge | $0.011 per 1,000 Neurons, on the Paid plan |
+
+So the binding constraint is the daily Neuron allowance on the AI calls, not the hosting and not the request
+count. Static hosting and the entire citizen journey stay free at any volume, because they are files on a CDN
+and code in the visitor's own browser.
+
+The honest way to read that: this scales fine as a demo and would need the $5 plan the day it saw real traffic,
+which is a pleasant problem and not an architectural one.
+
 ### If this were funded, what we would actually buy
 
 In roughly this order, because this is the order in which the free version stops being honest.
@@ -339,10 +356,11 @@ In roughly this order, because this is the order in which the free version stops
    single biggest gap between this and a service. `src/services/*` is where it plugs in.
 2. **Encrypted evidence storage** with retention rules and chain of custody. Screenshots of a fraud are
    evidence, and holding them in memory is fine for a demo and unacceptable for a case.
-3. **A paid model tier.** Move intake from the keyless free tier to `gpt-4o-mini` or better on the OpenAI
-   API. The free tier has no latency guarantee and no availability guarantee, which is fine for a
-   prototype and not fine for someone reporting a crime at 2am. The client already supports this path:
-   paste a key and it switches.
+3. **A paid model tier.** Two steps, and they are cheap. First the Workers Paid plan at $5 a month, which
+   lifts the 10,000 Neuron daily cap. Then, if accuracy demands it, move intake to `gpt-4o-mini` or better
+   on the OpenAI API. The free tier has no latency guarantee and no availability guarantee, which is fine
+   for a prototype and not fine for someone reporting a crime at 2am. The client already supports the
+   second path: paste a key and it switches.
 4. **Real identity verification** through DigiLocker or the Aadhaar APIs, replacing the simulated
    document read in `ocrService.ts`. This is a government integration more than a purchase.
 5. **Audit and observability storage**, so the activity log on every ticket is durable and admissible
