@@ -1,0 +1,90 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<title>Cyber Sahayata architecture</title>
+<style>
+  :root{--navy:#10508c;--ink:#14181d;--mut:#5a6673;--line:#d2d8e0;--bg:#f4f6f8;
+        --warn:#a4761a;--warnbg:#fdf6e6;--ok:#2f6d4f;--okbg:#eef6f1}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#fff;color:var(--ink);width:1400px;
+       font:16px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:38px 44px}
+  h1{font-size:25px;letter-spacing:-.02em;margin-bottom:3px}
+  .sub{color:var(--mut);font-size:14.5px;margin-bottom:26px}
+  .zone{border:2px solid var(--line);border-radius:14px;padding:18px 20px 20px;background:var(--bg);position:relative}
+  .zone.call{background:#fff;border-color:var(--navy)}
+  .zone.law{background:var(--okbg);border-color:var(--ok)}
+  .ztitle{font-size:11.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--mut);margin-bottom:4px}
+  .zone.call .ztitle{color:var(--navy)} .zone.law .ztitle{color:var(--ok)}
+  .zlede{font-size:14px;color:var(--mut);margin-bottom:14px}
+  .row{display:flex;gap:12px}
+  .box{flex:1;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .box b{display:block;font-size:14.5px;margin-bottom:3px}
+  .box span{font-size:12.5px;color:var(--mut);line-height:1.45;display:block}
+  .arrow{display:flex;flex-direction:column;align-items:center;gap:3px;margin:13px 0}
+  .arrow .lbl{font-size:12.5px;color:var(--navy);font-weight:700;background:#fff;padding:0 10px}
+  .arrow .lbl.mut{color:var(--mut);font-weight:600}
+  .arrow .stem{width:2px;height:16px;background:var(--navy)}
+  .arrow .head{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:9px solid var(--navy)}
+  .wall{display:flex;align-items:center;gap:14px;margin:16px 0 15px}
+  .wall .bar{flex:1;height:0;border-top:3px dashed var(--warn)}
+  .wall .txt{font-size:14px;font-weight:800;color:var(--warn);background:var(--warnbg);
+             border:1.5px solid var(--warn);border-radius:999px;padding:6px 18px;white-space:nowrap}
+  .why{margin-top:26px;border-top:1px solid var(--line);padding-top:18px}
+  .why .ztitle{margin-bottom:11px}
+  .whyrow{display:flex;gap:11px}
+  .w{flex:1;font-size:12.5px;color:var(--mut);line-height:1.5}
+  .w b{display:block;color:var(--ink);font-size:13.5px;margin-bottom:2px}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em;
+       background:#eaeef2;padding:1px 5px;border-radius:4px;color:var(--ink)}
+</style></head><body>
+
+<h1>How Cyber Sahayata is built</h1>
+<div class="sub">One rule shapes the whole architecture: the model reads people, it never states the law.</div>
+
+<div class="zone">
+  <div class="ztitle">Everything runs in the browser</div>
+  <div class="zlede">React and TypeScript, no backend, no database. Every service is a mock seam, so no real person's data exists anywhere.</div>
+  <div class="row">
+    <div class="box"><b>The journey</b><span>17 categories, tracked or anonymous, one question per screen</span></div>
+    <div class="box"><b>Draft state</b><span>localStorage only, files held in memory, never uploaded</span></div>
+    <div class="box"><b>Voice</b><span>Whisper runs on device, the audio never leaves</span></div>
+    <div class="box"><b>Mock backend</b><span><code>src/services/*</code>, the seam a real API would slot into</span></div>
+  </div>
+</div>
+
+<div class="arrow"><span class="lbl">the typed description, and nothing else</span><span class="stem"></span><span class="head"></span></div>
+
+<div class="zone call">
+  <div class="ztitle">One call leaves the device</div>
+  <div class="zlede">A Cloudflare Worker keeps the key off the client and sanitises the output.</div>
+  <div class="row">
+    <div class="box"><b>OpenAI gpt-oss-120b</b><span>the default, keyless and free on Workers AI</span></div>
+    <div class="box"><b>gpt-oss-20b, then llama</b><span>fallbacks, so a live demo never dies mid sentence</span></div>
+    <div class="box"><b>gpt-4o-mini</b><span>optional, only if you paste your own key</span></div>
+  </div>
+</div>
+
+<div class="arrow"><span class="lbl mut">returns seven keys: category, fields, platforms, city, state, sentiment, urgent</span><span class="stem"></span><span class="head"></span></div>
+
+<div class="wall"><span class="bar"></span><span class="txt">The model stops here. There is no key for law, statute, officer or deadline.</span><span class="bar"></span></div>
+
+<div class="zone law">
+  <div class="ztitle">Hand written, never generated</div>
+  <div class="zlede"><code>src/content/casePlans.ts</code> maps each category to its statutes and its clock. Every screen reads this file, so the citation is identical whether a model was involved or not.</div>
+  <div class="row">
+    <div class="box"><b>Sections of law</b><span>BNS 2023, IT Act 2000, IT Rules 2021, BUDS Act 2019</span></div>
+    <div class="box"><b>The named officer</b><span>drawn from a fixed roster, so the officer named can actually log in</span></div>
+    <div class="box"><b>The deadlines</b><span>acknowledgement, first contact, update cadence, resolve by</span></div>
+    <div class="box"><b>The escalation ladder</b><span>five levels, unlocked by a missed deadline, not by a human decision</span></div>
+  </div>
+</div>
+
+<div class="why">
+  <div class="ztitle">Why these choices</div>
+  <div class="whyrow">
+    <div class="w"><b>No backend</b>A judge can click the whole journey with nothing running. In a demo about crime victims, storing zero real data is the feature.</div>
+    <div class="w"><b>Keyless by default</b>The intake works for a stranger with no API key and no budget. gpt-oss is open weight, so Workers AI serves it free.</div>
+    <div class="w"><b>Statutes in a contract file</b>A wrong section of law is worse than no section. Types and a single lookup make a category losing its statutes impossible.</div>
+    <div class="w"><b>Whisper on device</b>Voice matters for people who cannot type a formal complaint. A description of a crime should not travel to be transcribed.</div>
+  </div>
+</div>
+
+</body></html>

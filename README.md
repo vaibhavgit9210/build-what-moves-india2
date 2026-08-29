@@ -221,7 +221,16 @@ Two honest notes on this. The `#/chat` page is the only place your account of th
 
 Everything above is for evaluating the product. Everything below is for evaluating the build.
 
+If you only look at one thing here, look at the architecture diagram in the next section. It shows the
+boundary the whole project is designed around: what the model is allowed to decide, and what it is not.
+
 ## How it is built
+
+![Architecture](docs/screens/architecture.png)
+
+One rule shapes the whole architecture: the model reads people, it never states the law. The diagram is
+generated from `docs/architecture.html`, so it can be regenerated rather than redrawn.
+
 
 **React 18 + TypeScript (strict)**. The journey is a state machine over a draft object with conditional steps, so a typed model of that draft is what stops the branches (tracked vs anonymous, 17 category specific field sets) from drifting apart.
 
