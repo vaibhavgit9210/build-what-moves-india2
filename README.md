@@ -25,7 +25,8 @@ Everything is demo data in your browser. Nothing is filed with any government sy
 
 **Live: https://cyber-sahayata.pages.dev/**
 
-Mirror, same build: <https://vaibhavkumar.is-a.dev/build-what-moves-india2/>. Either link works. Everything below uses the first one.
+The older link <https://vaibhavkumar.is-a.dev/build-what-moves-india2/> now forwards here automatically, carrying
+the query string and the hash with it, so any deep link shared earlier still lands on the right screen.
 
 Two minutes, three links, in this order:
 

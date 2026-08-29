@@ -24,6 +24,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      # The old GitHub Pages URL now forwards to https://cyber-sahayata.pages.dev/ .
+      # The build still runs because it is the typecheck gate, but the entry point
+      # served here is a forwarding page that preserves the query string and hash,
+      # so existing deep links like ?e2e=login#/reports/r-2 keep working.
+      - name: Replace the entry point with the forwarding page
+        run: cp redirect/index.html dist/index.html
       - name: Push dist to gh-pages
         run: |
           cd dist

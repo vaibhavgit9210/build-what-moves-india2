@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyber Sahayata has moved</title>
+<link rel="canonical" href="https://cyber-sahayata.pages.dev/">
+<meta name="robots" content="noindex">
+<script>
+  // Forward to the new home, carrying the query string and the hash.
+  // Both matter: the demo hooks live in the query (?e2e=login) and the route
+  // lives in the hash (#/reports/r-2), so dropping either breaks a shared link.
+  (function () {
+    var HOME = "https://cyber-sahayata.pages.dev/";
+    if (location.hostname === "cyber-sahayata.pages.dev") return; // never loop
+    location.replace(HOME + location.search + location.hash);
+  })();
+</script>
+<meta http-equiv="refresh" content="3;url=https://cyber-sahayata.pages.dev/">
+<style>
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f4f6f8;color:#14181d;
+    font:16px/1.6 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:24px}
+  main{max-width:34rem;text-align:center}
+  h1{font-size:1.35rem;margin:0 0 .6rem;letter-spacing:-.01em}
+  p{margin:0 0 .6rem;color:#4a5561}
+  a{color:#10508c;font-weight:600}
+  code{background:#e8ecf1;padding:.1rem .35rem;border-radius:4px;font-size:.9em}
+</style>
+</head>
+<body>
+<main>
+  <h1>Cyber Sahayata has a new home</h1>
+  <p>Taking you to <a id="go" href="https://cyber-sahayata.pages.dev/">cyber-sahayata.pages.dev</a>, keeping whatever link you followed.</p>
+  <p>If your browser does not move on its own, use the link above.</p>
+</main>
+<script>
+  // Keep the visible fallback link pointing at the exact page that was asked for.
+  var a = document.getElementById("go");
+  if (a) a.href = "https://cyber-sahayata.pages.dev/" + location.search + location.hash;
+</script>
+</body>
+</html>
