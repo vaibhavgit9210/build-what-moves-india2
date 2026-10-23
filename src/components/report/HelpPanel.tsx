@@ -54,7 +54,7 @@ export default function HelpPanel() {
         type="button"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
-        className="fixed bottom-4 right-4 z-40 rounded-sm bg-brand text-brandtext font-semibold px-5 py-3 min-h-[44px] shadow-md border border-brand hc-border cursor-pointer hover:bg-actionhover"
+        className="fixed bottom-4 right-4 z-40 cap cap-primary cap-float text-base font-semibold px-5"
       >
         {t('helpPanel.button')}
       </button>

@@ -28,7 +28,7 @@ function AccessibilityPanel({ open, onClose }: { open: boolean; onClose: () => v
       <legend className="font-bold mb-2">{legend}</legend>
       <div className="flex flex-col gap-1.5">
         {opts.map((o) => (
-          <label key={o.v} className="flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-surface">
+          <label key={o.v} className="flex items-center gap-3 px-3 py-2 min-h-[44px] rounded-sm cursor-pointer hover:bg-fill">
             <input
               type="radio"
               name={name}
@@ -107,7 +107,7 @@ export function Header() {
   const chatButton = (
     <Link
       to="/chat"
-      className="inline-flex items-center gap-1.5 bg-action text-actiontext text-sm font-semibold rounded-sm px-3 py-1.5 no-underline hover:bg-actionhover shrink-0"
+      className="cap cap-primary font-semibold shrink-0"
     >
       <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z" />
@@ -130,7 +130,7 @@ export function Header() {
         <select
           value={lang}
           onChange={(e) => setLang(e.target.value as Lang)}
-          className="bg-page text-ink border border-border rounded-sm px-1.5 py-1 text-sm cursor-pointer"
+          className="cap text-ink text-base md:text-sm"
           aria-label={t('nav.language')}
         >
           {LANGS.map((l) => (
@@ -142,25 +142,25 @@ export function Header() {
       </label>
       <button
         onClick={() => setA11yOpen(true)}
-        className="text-ink text-sm border border-border rounded-sm px-2.5 py-1.5 hover:bg-surface cursor-pointer"
+        className="cap"
       >
         {t('nav.accessibility')}
       </button>
       {user ? (
-        <div className="relative" ref={acctRef}>
+        <div className="md:relative" ref={acctRef}>
           <button
             onClick={() => setAcctOpen((v) => !v)}
             aria-expanded={acctOpen}
-            className="text-ink text-sm font-semibold border border-border rounded-sm px-2.5 py-1.5 hover:bg-surface cursor-pointer"
+            className="cap font-semibold"
           >
             {user.name.split(' ')[0]} ▾
           </button>
           {acctOpen && (
-            <div className="absolute right-0 top-full mt-1 z-40 bg-page text-ink border-2 border-border rounded-md shadow-lg min-w-44 py-1">
-              <Link to="/profile" onClick={() => setAcctOpen(false)} className="block px-4 py-2 no-underline text-ink hover:bg-surface">
+            <div className="absolute inset-x-0 md:left-auto md:right-0 top-full mt-2 z-40 popover text-ink md:min-w-48">
+              <Link to="/profile" onClick={() => setAcctOpen(false)} className="flex items-center min-h-[44px] px-3 rounded-sm no-underline text-ink hover:bg-fill">
                 {t('nav.profile')}
               </Link>
-              <Link to="/settings" onClick={() => setAcctOpen(false)} className="block px-4 py-2 no-underline text-ink hover:bg-surface">
+              <Link to="/settings" onClick={() => setAcctOpen(false)} className="flex items-center min-h-[44px] px-3 rounded-sm no-underline text-ink hover:bg-fill">
                 {t('nav.settings')}
               </Link>
               <button
@@ -170,7 +170,7 @@ export function Header() {
                   logout();
                   navigate('/');
                 }}
-                className="block w-full text-left px-4 py-2 hover:bg-surface cursor-pointer"
+                className="flex items-center w-full min-h-[44px] px-3 rounded-sm text-left hover:bg-fill cursor-pointer"
               >
                 {t('nav.logout')}
               </button>
@@ -178,7 +178,7 @@ export function Header() {
           )}
         </div>
       ) : (
-        <Link to="/login" className="text-ink text-sm font-semibold border border-border rounded-sm px-2.5 py-1.5 no-underline hover:bg-surface">
+        <Link to="/login" className="cap font-semibold">
           {t('nav.login')}
         </Link>
       )}
@@ -188,8 +188,8 @@ export function Header() {
   return (
     <header className="bg-page text-ink border-b border-border">
       <div className="mx-auto max-w-5xl px-4">
-        <div className="flex items-center justify-between gap-3 py-3">
-          <Link to="/" className="flex items-center gap-2.5 no-underline text-ink shrink-0">
+        <div className="flex flex-wrap items-center justify-between gap-3 py-3">
+          <Link to="/" className="flex items-center gap-2.5 no-underline text-ink min-w-0 grow basis-[10.5rem] max-w-max md:grow-0 md:basis-auto md:shrink-0">
             <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-brand">
               <path d="M12 2.5 4 6v6c0 5 3.4 8.3 8 9.5 4.6-1.2 8-4.5 8-9.5V6l-8-3.5z" />
               <path d="M9 12.2l2.2 2.2L15.5 10" />
@@ -204,10 +204,10 @@ export function Header() {
 
           <div className="hidden md:block">{utilities}</div>
 
-          <div className="md:hidden flex items-center gap-2">
+          <div className="md:hidden flex items-center gap-2 shrink-0 ml-auto">
             {chatButton}
             <button
-              className="text-ink border border-border rounded-sm px-3 py-2 font-semibold cursor-pointer"
+              className="cap font-semibold"
               aria-expanded={menuOpen}
               aria-controls="mobile-nav"
               onClick={() => setMenuOpen((v) => !v)}
@@ -238,7 +238,7 @@ export function Header() {
               {t('nav.profile')}
             </NavLink>
           )}
-          <div className="pt-3 border-t border-border mt-2">{utilities}</div>
+          <div className="relative pt-3 border-t border-border mt-2">{utilities}</div>
         </nav>
       )}
 

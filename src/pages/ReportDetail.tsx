@@ -115,7 +115,7 @@ function AccountabilityPanel({
                     href={social.intentUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center rounded-md bg-action text-actiontext px-4 py-2.5 font-semibold no-underline hover:bg-actionhover"
+                    className="inline-flex items-center min-h-[44px] rounded-full bg-action text-actiontext px-5 py-2.5 font-semibold no-underline hover:bg-actionhover shadow-action"
                   >
                     {t('plan.account.socialPost')}
                   </a>

@@ -66,7 +66,7 @@ export default function AdminShell() {
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value as Lang)}
-                className="bg-page text-ink border border-border rounded-sm px-1.5 py-1 text-sm cursor-pointer min-h-[36px]"
+                className="cap text-ink text-base md:text-sm"
                 aria-label={t('nav.language')}
               >
                 {LANGS.map((l) => (
@@ -78,7 +78,7 @@ export default function AdminShell() {
             </label>
             <Link
               to="/"
-              className="text-ink text-sm font-semibold border border-border rounded-sm px-2.5 py-1.5 no-underline hover:bg-surface"
+              className="cap font-semibold"
             >
               {t('admin.backToCitizen')}
             </Link>
@@ -91,7 +91,7 @@ export default function AdminShell() {
                 </span>
                 <button
                   onClick={logout}
-                  className="text-ink text-sm font-semibold border border-border rounded-sm px-2.5 py-1.5 hover:bg-surface cursor-pointer min-h-[36px]"
+                  className="cap font-semibold"
                 >
                   {t('admin.signOut')}
                 </button>

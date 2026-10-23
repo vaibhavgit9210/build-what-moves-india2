@@ -4,13 +4,14 @@ import { Link } from 'react-router-dom';
 type Variant = 'primary' | 'secondary' | 'warning' | 'plain';
 
 const BASE =
-  'inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-base font-semibold ' +
-  'min-h-[44px] cursor-pointer select-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
+  'inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold ' +
+  'min-h-[44px] cursor-pointer select-none transition-[background-color,color,scale] duration-150 ease-out ' +
+  '[&:active:not(:disabled)]:scale-[.97] disabled:opacity-50 disabled:cursor-not-allowed';
 
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-action text-actiontext hover:bg-actionhover shadow-[0_2px_0_rgba(0,0,0,0.35)]',
-  secondary: 'bg-surface text-ink border-2 border-border hover:bg-page hc-border',
-  warning: 'bg-error text-white hover:opacity-90 shadow-[0_2px_0_rgba(0,0,0,0.35)]',
+  primary: 'bg-action text-actiontext hover:bg-actionhover shadow-action',
+  secondary: 'bg-fill text-ink border-2 border-capline hover:bg-fillhover',
+  warning: 'bg-error text-white hover:opacity-90 shadow-error',
   plain: 'bg-transparent text-link underline underline-offset-4 px-2 py-2',
 };
 

@@ -170,15 +170,15 @@ export function Modal({
       onClose={onClose}
       onCancel={onClose}
       aria-labelledby="modal-title"
-      className="rounded-md border-2 border-ink p-0 w-[min(92vw,560px)] m-auto"
+      className="sheet p-0 w-[min(92vw,560px)] m-auto"
     >
-      <div className="p-5">
+      <div className="p-6">
         <div className="flex items-start justify-between gap-4 mb-3">
           <h2 id="modal-title" className="text-xl font-bold">{title}</h2>
           <button
             onClick={onClose}
             aria-label={t('common.close')}
-            className="text-2xl leading-none px-2 py-1 rounded hover:bg-surface cursor-pointer"
+            className="inline-flex items-center justify-center h-11 w-11 shrink-0 -mt-1.5 -mr-2 rounded-full border-2 border-capline bg-fill hover:bg-fillhover text-2xl leading-none cursor-pointer"
           >
             ×
           </button>

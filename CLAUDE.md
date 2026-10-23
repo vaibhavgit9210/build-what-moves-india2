@@ -159,6 +159,16 @@ admin routes hang because virtual time never settles.
   messages, uses them for one model call and stores nothing.
 - **Look**: plain-government styling after police.gov.sg (white header, navy
   #10508c actions/links, slim gray demo strip, no emojis anywhere in the UI).
+  **Glass pass (Oct 2026)**: macOS 26+ glass on floating chrome only (dialogs
+  `.sheet` + blurred scrim, account menu `.popover`); header controls and the
+  help button are `.cap` capsules, `Button` is a capsule. Tokens in
+  `global.css` (`--glass-solid`, `--blur`, `--rim`, `--drop`, `--tok-fill`,
+  `--tok-capline`, `--tok-actionshadow`); high contrast and Reduce
+  Transparency swap them to solid white, black borders, no blur. These
+  classes sit in `@layer components` on purpose, so the unlayered
+  `:focus-visible` (yellow ring + dark edge) still wins on focus; the
+  `.rounded-*:focus-visible` rules keep capsules round while focused. Forms,
+  the map and page content stay solid.
 - `src/services/*` = the mock backend seam (auth, reports, geo, ocr, stt,
   device). `sttService` runs Whisper-tiny in-browser via
   `@huggingface/transformers` (lazy chunk, model downloads from HF hub on first

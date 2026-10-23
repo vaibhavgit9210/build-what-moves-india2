@@ -437,7 +437,7 @@ export default function AdminTicketDetail() {
             <p className="text-sm text-muted mt-0 mb-3">{t('admin.fir.intro')}</p>
             <Link
               to={`/admin/tickets/${report.id}/fir-prep`}
-              className="inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-base font-semibold min-h-[44px] no-underline bg-action text-actiontext hover:bg-actionhover shadow-[0_2px_0_rgba(0,0,0,0.35)]"
+              className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold min-h-[44px] no-underline bg-action text-actiontext hover:bg-actionhover shadow-action"
             >
               {t('admin.fir.action')}
             </Link>
